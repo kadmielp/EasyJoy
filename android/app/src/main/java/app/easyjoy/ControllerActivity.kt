@@ -55,9 +55,6 @@ class ControllerActivity : Activity() {
             topMargin = dp(6)
         })
         setContentView(root)
-        toolbar.addOnLayoutChangeListener { v, l, t, r, b, _, _, _, _ ->
-            pad.blockedRect = if (v.visibility == View.VISIBLE) android.graphics.RectF(l.toFloat(), 0f, r.toFloat(), b.toFloat()) else null
-        }
         hideSystemBars()
     }
 
@@ -105,6 +102,19 @@ class ControllerActivity : Activity() {
         }
         btnHide.text = if (has && !pad.selectedVisible) "Mostrar" else "Ocultar"
         btnTilt.text = if (pad.tiltEnabled) "Volante: ligado" else "Volante: desligado"
+        placeToolbar(bottom = pad.selectedInTopHalf)
+    }
+
+    /** The toolbar sits on the side away from the selected control, so any spot (even corners) stays reachable. */
+    private fun placeToolbar(bottom: Boolean) {
+        val lp = toolbar.layoutParams as FrameLayout.LayoutParams
+        val gravity = (if (bottom) Gravity.BOTTOM else Gravity.TOP) or Gravity.CENTER_HORIZONTAL
+        if (lp.gravity == gravity) return
+        lp.gravity = gravity
+        lp.topMargin = if (bottom) 0 else dp(6)
+        lp.bottomMargin = if (bottom) dp(6) else 0
+        toolbar.layoutParams = lp
+        pad.toolbarAtBottom = bottom
     }
 
     private fun enterEdit() {
@@ -116,7 +126,6 @@ class ControllerActivity : Activity() {
     private fun exitEdit(keep: Boolean) {
         pad.finishEditing(keep)
         toolbar.visibility = View.GONE
-        pad.blockedRect = null
     }
 
     private fun toggleTilt() {

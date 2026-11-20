@@ -133,8 +133,12 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         }
     }
 
-    /** Screen area covered by the edit toolbar; controls can't be dragged under it. */
-    var blockedRect: RectF? = null
+    /** Where the edit toolbar currently sits; the edit hint is drawn on the other side. */
+    var toolbarAtBottom = false
+        set(v) { field = v; invalidate() }
+
+    /** True if the selected control is in the top half (the toolbar should then go to the bottom). */
+    val selectedInTopHalf: Boolean get() = selected?.let { it.cy < height / 2f } ?: false
 
     private fun layoutNow() {
         val W = width.toFloat()
@@ -331,13 +335,14 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
     }
 
     private fun clampInside(s: Elem) {
+        // Snap to an edge when close, so a control can sit exactly against it (e.g. in a corner).
+        val snap = height * 0.03f
+        if (s.cx - s.w / 2 < snap) s.cx = s.w / 2
+        if (s.cx + s.w / 2 > width - snap) s.cx = width - s.w / 2
+        if (s.cy - s.h / 2 < snap) s.cy = s.h / 2
+        if (s.cy + s.h / 2 > height - snap) s.cy = height - s.h / 2
         s.cx = s.cx.coerceIn(s.w / 2, max(s.w / 2, width - s.w / 2))
         s.cy = s.cy.coerceIn(s.h / 2, max(s.h / 2, height - s.h / 2))
-        // Keep it out from under the toolbar, or it could never be selected again.
-        val b = blockedRect ?: return
-        if (s.cx + s.w / 2 > b.left && s.cx - s.w / 2 < b.right && s.cy - s.h / 2 < b.bottom) {
-            s.cy = min(b.bottom + s.h / 2, max(s.h / 2, height - s.h / 2))
-        }
     }
 
     private fun editTouch(e: MotionEvent) {
@@ -363,7 +368,10 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
                     invalidate()
                 }
             }
-            MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dragging = false
+            MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                dragging = false
+                onSelectionChanged?.invoke() // the control may have moved to the other half: toolbar follows
+            }
         }
     }
 
@@ -599,7 +607,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         } else {
             text.color = 0xFF9AA0AE.toInt()
             text.textSize = H * 0.038f
-            c.drawText("Toque num controle para selecionar · arraste para mover", W / 2, H * 0.97f, text)
+            c.drawText("Toque num controle para selecionar · arraste para mover", W / 2, if (toolbarAtBottom) H * 0.06f else H * 0.97f, text)
         }
 
         if (tiltEnabled) drawTiltIndicator(c, W, H)
