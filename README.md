@@ -29,13 +29,14 @@ Games and emulators see a regular **Xbox 360 controller** — no per-game setup.
 | **Steering wheel** — hold the phone in landscape and turn it like a wheel (or lift one side). Big brake (LT) and throttle (RT) pedals, your thumbs still reach the buttons. Steering goes to the left stick, which every racing game understands. | <img src="docs/images/wheel.png" width="420"> |
 | **Layout editor** — in the *Layouts* tab pick a starting point (or tap *Editar* inside a controller), then drag any control, resize it (−/+), hide it, turn tilt steering on for any layout, and save it with a name. | <img src="docs/images/editor.png" width="420"> |
 
-The app has three tabs at the bottom:
+The app has three tabs at the bottom, and the PC you're connected to is always shown at the top (tap it to switch PCs or type an IP):
 
 <table>
 <tr>
-<td align="center"><img src="docs/images/layouts.png" width="240"><br><b>Layouts</b> — play, edit, delete or create your own</td>
-<td align="center"><img src="docs/images/home.png" width="240"><br><b>Controles</b> — finds your PC automatically and starts a mode</td>
+<td align="center"><img src="docs/images/home.png" width="240"><br><b>Jogar</b> — every mode and your own layouts, one tap to play</td>
+<td align="center"><img src="docs/images/layouts.png" width="240"><br><b>Layouts</b> — create, edit, duplicate or delete layouts</td>
 <td align="center"><img src="docs/images/settings.png" width="240"><br><b>Ajustes</b> — vibration, button size, steering, mouse</td>
+<td align="center"><img src="docs/images/connection.png" width="240"><br><b>PC picker</b> — finds your PC automatically</td>
 </tr>
 </table>
 
@@ -56,8 +57,8 @@ The app has three tabs at the bottom:
    - When Windows asks about the firewall, allow **Private networks**.
    - The virtual controller needs the [ViGEmBus driver](https://github.com/nefarius/ViGEmBus/releases/latest). The app tells you if it's missing. Mouse mode works without it.
 2. **Phone (Android 8+):** install `EasyJoy.apk` (allow installing from unknown sources when asked).
-3. Put both on the **same Wi-Fi**, open EasyJoy on the phone and tap your PC's name.
-4. In the **Controles** tab pick **Completo**, **Simples**, **Volante** or **Mouse**, or play one of your layouts from the **Layouts** tab.
+3. Put both on the **same Wi-Fi**, open EasyJoy on the phone and tap your PC's name (it shows up on the **Jogar** tab).
+4. In the **Jogar** tab pick **Completo**, **Simples**, **Volante**, **Mouse** or one of your own layouts.
 
 Closing the PC window keeps EasyJoy in the system tray; right-click the tray icon → *Sair* to quit. *Iniciar com o Windows* starts it with Windows.
 
