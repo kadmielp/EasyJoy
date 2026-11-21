@@ -45,7 +45,8 @@ Regras:
 ## App Android
 
 - Kotlin, Jetpack Compose para menu/configurações; **as telas de controle e o touchpad são `View` customizadas desenhadas em Canvas** (multitoque confiável, dedo pode deslizar de um botão pro outro).
-- **Tela inicial**: lista de PCs encontrados (DISCOVER a cada 2 s pra 255.255.255.255 e pro broadcast da sub-rede), toque para conectar; campo de IP manual; lembra o último PC e reconecta sozinho. Depois de conectado: três cartões grandes (Completo / Simples / Mouse), ajustes (vibração liga/desliga, sensibilidade do mouse).
+- **Menu com 3 abas na barra de baixo**: *Layouts* (layouts salvos: jogar, editar, apagar; criar a partir de Completo/Simples/Volante, que abre direto no editor), *Controles* (padrão: conexão e os modos), *Ajustes* (controle, volante, mouse).
+- **Aba Controles**: lista de PCs encontrados (DISCOVER a cada 2 s pra 255.255.255.255 e pro broadcast da sub-rede), toque para conectar; campo de IP manual; lembra o último PC e reconecta sozinho. Depois de conectado: três cartões grandes (Completo / Simples / Mouse), ajustes (vibração liga/desliga, sensibilidade do mouse).
 - **Completo** (paisagem, tela cheia): LT/LB à esquerda no topo, RB/RT à direita no topo; analógico esquerdo e direcional à esquerda; ABXY à direita (Y cima, X esq, B dir, A baixo, cores Xbox); analógico direito embaixo à direita; Back/Start no centro; botão Menu pequeno no topo central volta ao menu. Gatilhos digitais (0 ou 255).
 - **Simples** (paisagem): um analógico grande à esquerda que manda o analógico esquerdo **e** o direcional (quando passa de 50% numa direção); ABXY grandes; LB/RB; Back/Start.
 - **Analógico**: zona de toque maior que o desenho; zona morta 10%; o dedo que começou no analógico fica com ele até soltar.

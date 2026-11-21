@@ -27,13 +27,22 @@ Games and emulators see a regular **Xbox 360 controller** — no per-game setup.
 | **Full controller** — two sticks, d-pad, ABXY, LB/RB/LT/RT, Back/Start/Home | <img src="docs/images/full.png" width="420"> |
 | **Simple** — one big stick (also works as d-pad) and big ABXY, made for retro emulators | <img src="docs/images/simple.png" width="420"> |
 | **Steering wheel** — hold the phone in landscape and turn it like a wheel (or lift one side). Big brake (LT) and throttle (RT) pedals, your thumbs still reach the buttons. Steering goes to the left stick, which every racing game understands. | <img src="docs/images/wheel.png" width="420"> |
-| **Layout editor** — tap *Editar*, then drag any control, resize it (−/+), hide it, turn tilt steering on for any layout, and save it with a name. Saved layouts show up in the menu. | <img src="docs/images/editor.png" width="420"> |
+| **Layout editor** — in the *Layouts* tab pick a starting point (or tap *Editar* inside a controller), then drag any control, resize it (−/+), hide it, turn tilt steering on for any layout, and save it with a name. | <img src="docs/images/editor.png" width="420"> |
+
+The app has three tabs at the bottom:
 
 <table>
 <tr>
-<td align="center"><img src="docs/images/home.png" width="260"><br><b>Menu</b> — finds your PC automatically</td>
+<td align="center"><img src="docs/images/layouts.png" width="240"><br><b>Layouts</b> — play, edit, delete or create your own</td>
+<td align="center"><img src="docs/images/home.png" width="240"><br><b>Controles</b> — finds your PC automatically and starts a mode</td>
+<td align="center"><img src="docs/images/settings.png" width="240"><br><b>Ajustes</b> — vibration, button size, steering, mouse</td>
+</tr>
+</table>
+
+<table>
+<tr>
 <td align="center"><img src="docs/images/mouse.png" width="260"><br><b>Mouse</b> — touchpad, scrolling and keyboard</td>
-<td align="center"><img src="docs/images/pc-app.png" width="300"><br><b>PC app</b> — shows connected phones</td>
+<td align="center"><img src="docs/images/pc-app.png" width="300"><br><b>PC app</b> — shows connected phones and their mode</td>
 </tr>
 </table>
 
@@ -48,7 +57,7 @@ Games and emulators see a regular **Xbox 360 controller** — no per-game setup.
    - The virtual controller needs the [ViGEmBus driver](https://github.com/nefarius/ViGEmBus/releases/latest). The app tells you if it's missing. Mouse mode works without it.
 2. **Phone (Android 8+):** install `EasyJoy.apk` (allow installing from unknown sources when asked).
 3. Put both on the **same Wi-Fi**, open EasyJoy on the phone and tap your PC's name.
-4. Pick **Completo**, **Simples**, **Volante** or **Mouse**.
+4. In the **Controles** tab pick **Completo**, **Simples**, **Volante** or **Mouse**, or play one of your layouts from the **Layouts** tab.
 
 Closing the PC window keeps EasyJoy in the system tray; right-click the tray icon → *Sair* to quit. *Iniciar com o Windows* starts it with Windows.
 
@@ -57,7 +66,7 @@ Closing the PC window keeps EasyJoy in the system tray; right-click the tray ico
 - **The phone doesn't find the PC.** Same Wi-Fi? In the PC app click *Liberar no Firewall* (it also removes old "block" rules Windows creates if the firewall prompt was dismissed). Make sure the Wi-Fi network is set to **Private** in Windows. As a fallback, type the IP shown in the PC app.
 - **"Driver de controle não instalado".** Install [ViGEmBus](https://github.com/nefarius/ViGEmBus/releases/latest) and reopen EasyJoy.
 - **Home opens "Get an app to open this 'ms-gamebar' link".** That's Windows: the Xbox Home/Guide button opens Xbox Game Bar. Install Game Bar, or turn it off in *Settings → Gaming → Xbox Game Bar*.
-- **Steering pulls to one side.** Hold the phone straight and tap *Centralizar*. Too twitchy or too slow? Change *Volante: girar N°* in the app settings.
+- **Steering pulls to one side.** Hold the phone straight and tap *Centralizar*. Too twitchy or too slow? Change *Girar N°* in the *Ajustes* tab.
 - **The mouse doesn't work in a program running as administrator.** Windows blocks that; run EasyJoy as administrator too.
 
 ## Security

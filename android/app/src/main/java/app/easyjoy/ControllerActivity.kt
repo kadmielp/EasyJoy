@@ -56,6 +56,16 @@ class ControllerActivity : Activity() {
         })
         setContentView(root)
         hideSystemBars()
+
+        editOnly = intent.getBooleanExtra(EXTRA_EDIT, false)
+        if (editOnly) enterEditWhenLaidOut()
+    }
+
+    /** Opened from the Layouts tab: start in the editor and close when editing ends. */
+    private var editOnly = false
+
+    private fun enterEditWhenLaidOut() {
+        if (pad.width > 0 && pad.height > 0) enterEdit() else pad.post { enterEditWhenLaidOut() }
     }
 
     // ---- edit toolbar ------------------------------------------------------------------------
@@ -126,6 +136,7 @@ class ControllerActivity : Activity() {
     private fun exitEdit(keep: Boolean) {
         pad.finishEditing(keep)
         toolbar.visibility = View.GONE
+        if (editOnly) finish()
     }
 
     private fun toggleTilt() {
@@ -210,6 +221,7 @@ class ControllerActivity : Activity() {
     companion object {
         const val EXTRA_MODE = "mode"
         const val EXTRA_LAYOUT = "layout"
+        const val EXTRA_EDIT = "edit"
         const val MODE_FULL = Layouts.FULL
         const val MODE_SIMPLE = Layouts.SIMPLE
         const val MODE_WHEEL = Layouts.WHEEL
