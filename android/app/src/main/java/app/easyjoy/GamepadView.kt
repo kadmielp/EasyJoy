@@ -27,8 +27,8 @@ import kotlin.math.roundToInt
  */
 class GamepadView(context: Context, val base: String, initial: Layout?) : View(context) {
 
-    var onMenu: (() -> Unit)? = null
-    var onEdit: (() -> Unit)? = null
+    /** Tap on the small "⋯" button: the activity shows Menu / Editar, so a stray tap changes nothing. */
+    var onOptions: (() -> Unit)? = null
     /** Called in edit mode when the selection or its visibility changes. */
     var onSelectionChanged: (() -> Unit)? = null
 
@@ -78,8 +78,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
     private var snapshot: List<Control>? = null
     private var snapshotTilt = false
 
-    private val menuRect = RectF()
-    private val editRect = RectF()
+    private val optionsRect = RectF()
     private val pts = HashMap<Int, FloatArray>()
 
     private var sent: IntArray? = null
@@ -144,8 +143,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         val W = width.toFloat()
         val H = height.toFloat()
         if (W <= 0f || H <= 0f) return
-        menuRect.set(W * 0.385f, H * 0.02f, W * 0.495f, H * 0.12f)
-        editRect.set(W * 0.505f, H * 0.02f, W * 0.615f, H * 0.12f)
+        optionsRect.set(W / 2 - H * 0.06f, H * 0.02f, W / 2 + H * 0.06f, H * 0.11f)
         applyDefaults(W, H)
         custom?.forEach { c ->
             el(c.id)?.let {
@@ -388,12 +386,8 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
                 val id = e.getPointerId(i)
                 val x = e.getX(i)
                 val y = e.getY(i)
-                if (menuRect.contains(x, y)) {
-                    onMenu?.invoke()
-                    return true
-                }
-                if (editRect.contains(x, y)) {
-                    onEdit?.invoke()
+                if (optionsRect.contains(x, y)) {
+                    onOptions?.invoke()
                     return true
                 }
                 pts[id] = floatArrayOf(x, y)
@@ -515,6 +509,12 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
             if (b.trigger == 2) { rt = 255; bits = bits or (1 shl 21) }
             bits = bits or b.mask
         }
+        for (t in external.values) {
+            mask = mask or t.mask
+            bits = bits or t.mask
+            if (t.trigger == 1) lt = 255
+            if (t.trigger == 2) rt = 255
+        }
         if (bits and prevPressBits.inv() != 0) Settings.buzz(15)
         prevPressBits = bits
 
@@ -529,6 +529,14 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
     }
 
     private var dpadMask = 0
+
+    /** Buttons held by physical keys (volume up/down), keyed by key code. */
+    private val external = mutableMapOf<Int, Settings.VolumeTarget>()
+
+    fun setExternal(keyCode: Int, target: Settings.VolumeTarget, down: Boolean) {
+        if (down) external[keyCode] = target else external.remove(keyCode)
+        recompute(true)
+    }
 
     private fun toAxis(v: Float): Int = (v * 32767f).roundToInt().coerceIn(-32768, 32767)
 
@@ -561,6 +569,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         handler.removeCallbacks(ticker)
         Tilt.stop()
         clearTouches()
+        external.clear()
         prevPressBits = 0
         recompute(false)
         sent = null
@@ -583,22 +592,16 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         val H = height.toFloat()
 
         if (!editing) {
-            drawPill(c, menuRect, "Menu", H)
-            drawPill(c, editRect, "Editar", H)
-
+            drawPill(c, optionsRect, "⋯", H)
+            // Connection: a small dot on the button; words only when something is wrong.
             val ok = Connection.connected
-            val dotR = H * 0.016f
-            val iy = H * 0.17f
-            val label = if (ok) "conectado" else "desconectado"
-            text.textSize = H * 0.04f
-            val tw = text.measureText(label)
-            val startX = W / 2 - (tw + dotR * 3) / 2
             fill.color = if (ok) 0xFF3DDC57.toInt() else 0xFFE5484D.toInt()
-            c.drawCircle(startX + dotR, iy, dotR, fill)
-            text.color = if (ok) 0xFFB5E8BE.toInt() else 0xFFFF8A8E.toInt()
-            text.textAlign = Paint.Align.LEFT
-            c.drawText(label, startX + dotR * 3, iy + text.textSize * 0.35f, text)
-            text.textAlign = Paint.Align.CENTER
+            c.drawCircle(optionsRect.right - H * 0.012f, optionsRect.top + H * 0.012f, H * 0.012f, fill)
+            if (!ok) {
+                text.color = 0xFFFF8A8E.toInt()
+                text.textSize = H * 0.038f
+                c.drawText("desconectado", W / 2, H * 0.16f, text)
+            }
             if (ok && Connection.driverMissing) {
                 text.color = 0xFFFFB454.toInt()
                 text.textSize = H * 0.035f

@@ -17,6 +17,7 @@ object Protocol {
     const val T_SCROLL = 0x22
     const val T_TEXT = 0x23
     const val T_KEY = 0x24
+    const val T_ZOOM = 0x25
     const val T_BYE = 0x30
 
     // XInput button masks
@@ -74,6 +75,9 @@ object Protocol {
 
     fun mouseButton(eventId: Int, button: Int, action: Int): ByteArray =
         buf(T_MOUSE_BUTTON, 4).putShort(eventId.toShort()).put(button.toByte()).put(action.toByte()).array()
+
+    /** Ctrl + wheel on the PC, in wheel units (120 = one step); positive = zoom in. */
+    fun zoom(amount: Int): ByteArray = buf(T_ZOOM, 2).putShort(amount.toShort()).array()
 
     fun scroll(vertical: Int, horizontal: Int): ByteArray =
         buf(T_SCROLL, 4).putShort(vertical.toShort()).putShort(horizontal.toShort()).array()

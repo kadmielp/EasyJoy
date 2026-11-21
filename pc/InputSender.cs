@@ -37,6 +37,13 @@ public static class InputSender
         if (horizontal != 0) Send(Mouse(MOUSEEVENTF_HWHEEL, 0, 0, unchecked((uint)horizontal)));
     }
 
+    // Pinch zoom = Ctrl + wheel, in one batch so Ctrl never stays held. Positive = zoom in.
+    public static void Zoom(int amount)
+    {
+        if (amount == 0) return;
+        Send(Keyboard(0x11, 0, 0), Mouse(MOUSEEVENTF_WHEEL, 0, 0, unchecked((uint)amount)), Keyboard(0x11, 0, KEYEVENTF_KEYUP));
+    }
+
     public static void Text(string text)
     {
         var inputs = new List<INPUT>(text.Length * 2);

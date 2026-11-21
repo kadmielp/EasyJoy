@@ -262,6 +262,8 @@ object Connection {
 
     fun scroll(vertical: Int, horizontal: Int) = send(Protocol.scroll(vertical, horizontal))
 
+    fun zoom(amount: Int) = send(Protocol.zoom(amount))
+
     fun key(vk: Int) = sendThrice { Protocol.key(it, vk) }
 
     /** Sends text, splitting long strings into chunks that fit one datagram. */

@@ -47,9 +47,9 @@ The app has three tabs at the bottom, and the PC you're connected to is always s
 </tr>
 </table>
 
-**Mouse mode:** drag to move · tap = left click · two-finger tap = right click · two-finger drag = scroll · tap, hold and drag = drag items · *Teclado* opens the phone keyboard to type on the PC.
+**Mouse mode:** works like a laptop touchpad. Drag to move · tap = left click · two-finger tap = right click · two-finger drag = scroll · double-tap and drag = drag items · pinch = zoom (Ctrl + wheel) · two-finger flick keeps scrolling and slows down · *Teclado* opens the phone keyboard to type on the PC.
 
-**Settings:** vibration on touch, mouse sensitivity, button size (80–120%), and how far you turn for full steering (15–90°).
+**Settings:** vibration on touch, mouse sensitivity, button size (80–120%), how far you turn for full steering (15–90°), and the phone's **volume keys** as controller buttons (e.g. Volume + = RT, Volume − = LT).
 
 ## Quick start
 

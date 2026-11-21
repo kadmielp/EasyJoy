@@ -43,11 +43,25 @@ class TouchpadView(context: Context) : View(context) {
     private var mode = Mode.IDLE
     private var twoDownTime = 0L
     private var twoMoved = false
+    private var pinching = false
+    private var lastSpread = 0f
+    private var zoomAcc = 0f
 
     private var accX = 0f
     private var accY = 0f
     private var scrollAccV = 0f
     private var scrollAccH = 0f
+
+    // Double-tap-and-drag: a tap, then a touch that moves within this time and distance, drags.
+    private var lastTapUp = 0L
+    private var lastTapX = 0f
+    private var lastTapY = 0f
+    private var dragArmed = false
+
+    // Scroll inertia: finger velocity (px/ms) while scrolling, continued after the fingers lift.
+    private var velX = 0f
+    private var velY = 0f
+    private var lastScrollTime = 0L
 
     private var leftHeld = false
     private var rightHeld = false
@@ -101,6 +115,7 @@ class TouchpadView(context: Context) : View(context) {
     }
 
     private fun onDown(id: Int, x: Float, y: Float, now: Long) {
+        stopFling()
         if (menuRect.contains(x, y)) {
             onMenu?.invoke()
             return
@@ -127,26 +142,20 @@ class TouchpadView(context: Context) : View(context) {
             padPtrs.size == 1 -> {
                 mode = Mode.PENDING
                 accX = 0f; accY = 0f
-                handler.removeCallbacks(holdRunnable)
-                handler.postDelayed(holdRunnable, 400)
+                dragArmed = now - lastTapUp < DOUBLE_TAP_MS && hypot(x - lastTapX, y - lastTapY) < 48 * d
             }
             padPtrs.size == 2 && (mode == Mode.PENDING || mode == Mode.MOVE) -> {
-                handler.removeCallbacks(holdRunnable)
+                dragArmed = false
                 val first = padPtrs.values.first()
                 twoDownTime = if (mode == Mode.PENDING) first.downTime else Long.MIN_VALUE / 2
                 twoMoved = false
+                pinching = false
+                zoomAcc = 0f
                 scrollAccV = 0f; scrollAccH = 0f
+                velX = 0f; velY = 0f
+                lastScrollTime = now
                 mode = Mode.TWO
             }
-        }
-    }
-
-    private val holdRunnable = Runnable {
-        if (mode == Mode.PENDING && padPtrs.size == 1) {
-            mode = Mode.DRAG
-            Connection.mouseButton(Protocol.MOUSE_LEFT, Protocol.ACTION_DOWN)
-            Settings.buzz(35)
-            invalidate()
         }
     }
 
@@ -162,8 +171,13 @@ class TouchpadView(context: Context) : View(context) {
                 val id = padPtrs.keys.first(); val p = cur[id] ?: return
                 val ptr = padPtrs[id] ?: return
                 if (hypot(p[0] - ptr.sx, p[1] - ptr.sy) > slop) {
-                    handler.removeCallbacks(holdRunnable)
-                    mode = Mode.MOVE
+                    if (dragArmed) {
+                        mode = Mode.DRAG
+                        Connection.mouseButton(Protocol.MOUSE_LEFT, Protocol.ACTION_DOWN)
+                        Settings.buzz(35)
+                    } else {
+                        mode = Mode.MOVE
+                    }
                     moveBy(p[0] - ptr.lx, p[1] - ptr.ly)
                     ptr.lx = p[0]; ptr.ly = p[1]
                 }
@@ -175,6 +189,7 @@ class TouchpadView(context: Context) : View(context) {
                 ptr.lx = p[0]; ptr.ly = p[1]
             }
             Mode.TWO -> {
+                if (cur.size >= 2 && padPtrs.size >= 2 && onTwoFingers(cur)) return
                 var sumDx = 0f
                 var sumDy = 0f
                 var n = 0
@@ -188,7 +203,15 @@ class TouchpadView(context: Context) : View(context) {
                         n++
                     }
                 }
-                if (twoMoved && n > 0) scrollBy(sumDx / padPtrs.size, sumDy / padPtrs.size)
+                if (twoMoved && n > 0) {
+                    val dx = sumDx / padPtrs.size
+                    val dy = sumDy / padPtrs.size
+                    scrollBy(dx, dy)
+                    val dt = (e.eventTime - lastScrollTime).coerceAtLeast(1L).toFloat()
+                    velX = 0.6f * (dx / dt) + 0.4f * velX
+                    velY = 0.6f * (dy / dt) + 0.4f * velY
+                    lastScrollTime = e.eventTime
+                }
             }
             else -> {}
         }
@@ -212,9 +235,11 @@ class TouchpadView(context: Context) : View(context) {
                 val ptr = padPtrs.remove(id) ?: return
                 when (mode) {
                     Mode.PENDING -> {
-                        handler.removeCallbacks(holdRunnable)
-                        if (now - ptr.downTime < 200) {
+                        if (now - ptr.downTime < 250) {
                             Connection.mouseButton(Protocol.MOUSE_LEFT, Protocol.ACTION_CLICK)
+                            // A second tap right after is a double-click, not the start of a drag.
+                            lastTapUp = if (dragArmed) 0L else now
+                            lastTapX = ptr.sx; lastTapY = ptr.sy
                         }
                         mode = Mode.IDLE
                     }
@@ -224,8 +249,10 @@ class TouchpadView(context: Context) : View(context) {
                         mode = if (padPtrs.isEmpty()) Mode.IDLE else Mode.IGNORE
                     }
                     Mode.TWO -> {
-                        if (!twoMoved && now - twoDownTime < 350) {
+                        if (!twoMoved && !pinching && now - twoDownTime < 350) {
                             Connection.mouseButton(Protocol.MOUSE_RIGHT, Protocol.ACTION_CLICK)
+                        } else if (twoMoved && now - lastScrollTime < 80) {
+                            startFling() // fingers were still moving when they lifted
                         }
                         mode = if (padPtrs.isEmpty()) Mode.IDLE else Mode.IGNORE
                     }
@@ -238,9 +265,42 @@ class TouchpadView(context: Context) : View(context) {
         }
     }
 
+    /**
+     * Pinch vs. two-finger scroll, decided once per gesture: fingers spreading/closing more than the
+     * pair moves = pinch (zoom), otherwise scroll. Returns true when the move was used as a pinch.
+     */
+    private fun onTwoFingers(cur: Map<Int, FloatArray>): Boolean {
+        val ids = padPtrs.keys.take(2)
+        val a = cur[ids[0]] ?: return false
+        val b = cur[ids[1]] ?: return false
+        val pa = padPtrs[ids[0]]!!
+        val pb = padPtrs[ids[1]]!!
+        val spread = hypot(a[0] - b[0], a[1] - b[1])
+        if (!pinching && !twoMoved) {
+            val startSpread = hypot(pa.sx - pb.sx, pa.sy - pb.sy)
+            val change = kotlin.math.abs(spread - startSpread)
+            val shift = hypot((a[0] + b[0] - pa.sx - pb.sx) / 2, (a[1] + b[1] - pa.sy - pb.sy) / 2)
+            if (change > slop * 2 && change > shift * 1.5f) {
+                pinching = true
+                lastSpread = spread
+            }
+        }
+        if (!pinching) return false
+        // One zoom step (120) per ~45 dp of spread change; spreading = zoom in.
+        zoomAcc += (spread - lastSpread) * 120f / (45f * d)
+        lastSpread = spread
+        val steps = (zoomAcc / 120f).toInt()
+        if (steps != 0) {
+            zoomAcc -= steps * 120f
+            Connection.zoom(steps * 120)
+            Settings.buzz(10)
+        }
+        return true
+    }
+
     /** Release anything held; called on cancel and when the screen is paused. */
     fun releaseAll() {
-        handler.removeCallbacks(holdRunnable)
+        stopFling()
         if (mode == Mode.DRAG) Connection.mouseButton(Protocol.MOUSE_LEFT, Protocol.ACTION_UP)
         if (leftHeld) Connection.mouseButton(Protocol.MOUSE_LEFT, Protocol.ACTION_UP)
         if (rightHeld) Connection.mouseButton(Protocol.MOUSE_RIGHT, Protocol.ACTION_UP)
@@ -265,17 +325,42 @@ class TouchpadView(context: Context) : View(context) {
         }
     }
 
-    /** Fingers up (dy < 0) send positive (scroll up). 120 units per ~50 dp. */
+    /** Natural scrolling, like a laptop touchpad: the page follows the fingers. 120 units per ~50 dp. */
     private fun scrollBy(dx: Float, dy: Float) {
         val k = 120f / (50f * d)
-        scrollAccV += -dy * k
+        scrollAccV += dy * k
         val horizontal = kotlin.math.abs(dx) > kotlin.math.abs(dy)
-        if (horizontal) scrollAccH += dx * k
+        if (horizontal) scrollAccH += -dx * k
         val v = scrollAccV.toInt()
         val h = scrollAccH.toInt()
         scrollAccV -= v
         scrollAccH -= h
         if (v != 0 || h != 0) Connection.scroll(v.coerceIn(-32768, 32767), h.coerceIn(-32768, 32767))
+    }
+
+    // ---- scroll inertia ------------------------------------------------------------------------
+
+    private val fling = object : Runnable {
+        override fun run() {
+            velX *= FRICTION
+            velY *= FRICTION
+            if (hypot(velX, velY) < 0.05f * d) return
+            scrollBy(velX * FRAME_MS, velY * FRAME_MS)
+            handler.postDelayed(this, FRAME_MS.toLong())
+        }
+    }
+
+    private fun startFling() {
+        handler.removeCallbacks(fling)
+        if (hypot(velX, velY) >= 0.15f * d) handler.post(fling)
+    }
+
+    private fun stopFling() = handler.removeCallbacks(fling)
+
+    private companion object {
+        const val DOUBLE_TAP_MS = 300L
+        const val FRAME_MS = 16f
+        const val FRICTION = 0.94f
     }
 
     // ---- periodic repaint for the connection indicator ---------------------------------------
@@ -336,7 +421,8 @@ class TouchpadView(context: Context) : View(context) {
             "Toque = clique esquerdo",
             "Toque com 2 dedos = clique direito",
             "2 dedos arrastando = rolagem",
-            "Segure e arraste = arrastar item",
+            "Pinça com 2 dedos = zoom",
+            "Toque duas vezes e arraste = arrastar item",
         )
         var y = cy - (lines.size - 1) * 10 * d
         for (l in lines) { c.drawText(l, cx, y + text.textSize * 0.35f, text); y += 20 * d }

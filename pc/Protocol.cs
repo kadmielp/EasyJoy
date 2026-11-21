@@ -16,6 +16,7 @@ public enum PacketType : byte
     Scroll = 0x22,
     Text = 0x23,
     Key = 0x24,
+    Zoom = 0x25,
     Bye = 0x30,
 }
 

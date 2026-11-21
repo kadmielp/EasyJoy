@@ -31,6 +31,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -423,6 +425,27 @@ private fun copyName(name: String): String {
 // ---- Ajustes -------------------------------------------------------------------------------
 
 @Composable
+private fun VolumePicker(label: String, current: String, onPick: (String) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
+        Box {
+            OutlinedButton(onClick = { open = true }) {
+                Text(Settings.VolumeTargets.first { it.id == current }.label + "  ▾", maxLines = 1)
+            }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                for (t in Settings.VolumeTargets) {
+                    DropdownMenuItem(
+                        text = { Text(t.label, color = if (t.id == current) Green else Color.Unspecified) },
+                        onClick = { onPick(t.id); open = false },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun SettingsTab(padding: PaddingValues, openPcs: () -> Unit) {
     TabPage(padding, "Ajustes", openPcs) {
         SectionTitle("Controle")
@@ -453,6 +476,15 @@ private fun SettingsTab(padding: PaddingValues, openPcs: () -> Unit) {
                     steps = 14,
                 )
                 Hint("Menor = mais sensível. Use o botão \"Centralizar\" no volante para definir a posição reta.")
+            }
+        }
+
+        SectionTitle("Botões de volume")
+        PanelCard {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                VolumePicker("Volume +", Settings.volumeUp, Settings::updateVolumeUp)
+                VolumePicker("Volume −", Settings.volumeDown, Settings::updateVolumeDown)
+                Hint("Nas telas de controle, os botões de volume do celular apertam o botão escolhido. Em \"Nenhum\", mudam o volume normalmente.")
             }
         }
 

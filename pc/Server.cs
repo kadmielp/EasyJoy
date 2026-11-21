@@ -97,6 +97,13 @@ public sealed class Server : IDisposable
                 InputSender.Scroll(Protocol.I16(body, 0), Protocol.I16(body, 2));
                 break;
 
+            case PacketType.Zoom:
+                if (body.Length < 2) return;
+                phone.Mode = "Mouse";
+                phone.LastMouseActivity = DateTime.UtcNow;
+                InputSender.Zoom(Protocol.I16(body, 0));
+                break;
+
             case PacketType.MouseButton:
             {
                 if (body.Length < 4) return;

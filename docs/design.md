@@ -33,6 +33,7 @@ Todo pacote começa com o cabeçalho de 4 bytes: `'E' 'J' 0x01 <tipo>`. Pacotes 
 | `0x22` SCROLL | celular → PC | `i16 vertical`, `i16 horizontal` (unidades de roda do Windows: 120 = um "dente"; positivo = rolar pra cima / direita) |
 | `0x23` TEXT | celular → PC | `u16 eventId`, texto UTF-8 |
 | `0x24` KEY | celular → PC | `u16 eventId`, `u8 virtualKey` (VK do Windows: 0x08 Backspace, 0x0D Enter, 0x1B Esc, 0x09 Tab, 0x25–0x28 setas) |
+| `0x25` ZOOM | celular → PC | `i16 amount` (unidades de roda; o PC faz Ctrl + roda; positivo = aproximar) |
 | `0x30` BYE | celular → PC | vazio — saiu do modo controle; PC desconecta o controle virtual desse celular |
 
 Regras:
@@ -51,11 +52,14 @@ Regras:
 - **Completo** (paisagem, tela cheia): LT/LB à esquerda no topo, RB/RT à direita no topo; analógico esquerdo e direcional à esquerda; ABXY à direita (Y cima, X esq, B dir, A baixo, cores Xbox); analógico direito embaixo à direita; Back/Start no centro; botão Menu pequeno no topo central volta ao menu. Gatilhos digitais (0 ou 255).
 - **Simples** (paisagem): um analógico grande à esquerda que manda o analógico esquerdo **e** o direcional (quando passa de 50% numa direção); ABXY grandes; LB/RB; Back/Start.
 - **Analógico**: zona de toque maior que o desenho; zona morta 10%; o dedo que começou no analógico fica com ele até soltar.
-- **Mouse** (qualquer orientação): área de touchpad — arrastar 1 dedo move; toque rápido = clique esquerdo; toque com 2 dedos = clique direito; arrastar 2 dedos = rolagem; tocar e segurar ~0,4 s e arrastar = arrastar segurando o botão esquerdo. Barra embaixo com botões Esquerdo / Direito, botão Teclado (abre o teclado do celular; letras viram TEXT, apagar vira KEY Backspace, Enter vira KEY Enter).
+- **Mouse** (qualquer orientação): área de touchpad — arrastar 1 dedo move; toque rápido = clique esquerdo; toque com 2 dedos = clique direito; arrastar 2 dedos = rolagem; tocar duas vezes e arrastar = arrastar segurando o botão esquerdo (como no Windows); pinça com 2 dedos = zoom (Ctrl + roda no PC, pacote ZOOM); rolagem com inércia: soltar os 2 dedos ainda em movimento continua rolando e desacelera. Barra embaixo com botões Esquerdo / Direito, botão Teclado (abre o teclado do celular; letras viram TEXT, apagar vira KEY Backspace, Enter vira KEY Enter).
 - **Home** (Guide 0x0400) nos dois modos, acima de Back/Start.
 - **Tamanho dos botões** (Ajustes, 80–120%, passos de 5%): tamanhos escalam; posições só se deslocam o necessário para não sair da tela nem encostar no vizinho; LB/RB/LT/RT crescem só na largura. Um toque que cai no direcional ou num botão nunca captura o analógico vizinho.
 - **Volante** (modo próprio, ou ligado em qualquer layout pelo editor): `Tilt.kt` lê a gravidade ao longo do eixo comprido do celular deitado (`asin(gy/g)`, sinal invertido em ROTATION_270), então funciona tanto girando como volante quanto levantando um lado. Vira o **eixo X do analógico esquerdo** (só quando o polegar não está no analógico). Zona morta 2°; "girar N° = direção toda" em Ajustes (15–90°, padrão 45°); "Centralizar" grava o ângulo atual como reto. Sem leitura nova do sensor, a direção é zero. O layout Volante tem pedais digitais Freio (LT) / Acelerar (RT).
 - **Editor de layout** (botão "Editar" no controle): selecionar, arrastar, −/+ tamanho, ocultar/mostrar, ligar volante, voltar ao padrão, cancelar, salvar com nome. Layouts salvos (`Layouts.kt`) ficam em JSON no SharedPreferences: base (completo/simples/volante), volante ligado, e cada controle com centro em fração da largura/altura e tamanho em unidades da altura. Controles não podem ser arrastados para baixo da barra de edição.
+- **Botões de volume** (Ajustes): Volume + e Volume − podem virar qualquer botão do controle (A/B/X/Y, LB/RB, LT/RT, Back/Start/Home, direcional, L3/R3); padrão "Nenhum" = volume normal. Só nas telas de controle e fora do editor; segurar a tecla segura o botão.
+- **Rolagem do mouse natural** (como touchpad de laptop): a página acompanha os dedos.
+- **Tela de controle**: no topo só um botão pequeno "⋯" (com um pontinho verde/vermelho da conexão); tocar abre Voltar ao menu / Editar layout / Continuar jogando, então um toque sem querer não muda nada. "desconectado" só aparece escrito quando cai.
 - Vibração curta ao apertar botão (configurável). Tela fica ligada nos modos de controle.
 - minSdk 26.
 

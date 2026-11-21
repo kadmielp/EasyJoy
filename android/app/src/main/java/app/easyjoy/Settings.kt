@@ -26,6 +26,11 @@ object Settings {
         private set
     var tiltMax by mutableFloatStateOf(45f)
         private set
+    /** Gamepad button pressed by the phone's volume keys on controller screens ("none" = normal volume). */
+    var volumeUp by mutableStateOf(NONE)
+        private set
+    var volumeDown by mutableStateOf(NONE)
+        private set
     var lastIp: String? = null
         private set
     var lastName: String? = null
@@ -42,6 +47,8 @@ object Settings {
         buttonScale = p.getFloat("buttonScale", 1f).coerceIn(MIN_SCALE, MAX_SCALE)
         tiltCenter = p.getFloat("tiltCenter", 0f)
         tiltMax = p.getFloat("tiltMax", 45f).coerceIn(15f, 90f)
+        volumeUp = p.getString("volumeUp", NONE)!!.takeIf { t -> VolumeTargets.any { it.id == t } } ?: NONE
+        volumeDown = p.getString("volumeDown", NONE)!!.takeIf { t -> VolumeTargets.any { it.id == t } } ?: NONE
         Layouts.init(app)
         lastIp = p.getString("lastIp", null)
         lastName = p.getString("lastName", null)
@@ -75,6 +82,35 @@ object Settings {
         tiltMax = v.coerceIn(15f, 90f)
         prefs?.edit()?.putFloat("tiltMax", tiltMax)?.apply()
     }
+
+    fun updateVolumeUp(id: String) {
+        volumeUp = id
+        prefs?.edit()?.putString("volumeUp", id)?.apply()
+    }
+
+    fun updateVolumeDown(id: String) {
+        volumeDown = id
+        prefs?.edit()?.putString("volumeDown", id)?.apply()
+    }
+
+    const val NONE = "none"
+
+    /** A gamepad button a volume key can press: XInput [mask], or [trigger] 1 = LT, 2 = RT. */
+    data class VolumeTarget(val id: String, val label: String, val mask: Int = 0, val trigger: Int = 0)
+
+    val VolumeTargets = listOf(
+        VolumeTarget(NONE, "Nenhum (volume)"),
+        VolumeTarget("A", "A", 0x1000), VolumeTarget("B", "B", 0x2000),
+        VolumeTarget("X", "X", 0x4000), VolumeTarget("Y", "Y", 0x8000),
+        VolumeTarget("LB", "LB", 0x0100), VolumeTarget("RB", "RB", 0x0200),
+        VolumeTarget("LT", "LT", trigger = 1), VolumeTarget("RT", "RT", trigger = 2),
+        VolumeTarget("BACK", "Back", 0x0020), VolumeTarget("START", "Start", 0x0010), VolumeTarget("HOME", "Home", 0x0400),
+        VolumeTarget("UP", "Direcional ↑", 0x0001), VolumeTarget("DOWN", "Direcional ↓", 0x0002),
+        VolumeTarget("LEFT", "Direcional ←", 0x0004), VolumeTarget("RIGHT", "Direcional →", 0x0008),
+        VolumeTarget("L3", "L3", 0x0040), VolumeTarget("R3", "R3", 0x0080),
+    )
+
+    fun volumeTarget(id: String) = VolumeTargets.firstOrNull { it.id == id && it.id != NONE }
 
     fun updateLast(ip: String?, name: String?) {
         lastIp = ip

@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
@@ -44,8 +45,7 @@ class ControllerActivity : Activity() {
         layoutName = saved?.name
         val base = saved?.base ?: intent.getStringExtra(EXTRA_MODE) ?: Layouts.FULL
         pad = GamepadView(this, base, saved)
-        pad.onMenu = { finish() }
-        pad.onEdit = { enterEdit() }
+        pad.onOptions = { showOptions() }
         pad.onSelectionChanged = { refreshToolbar() }
 
         val root = FrameLayout(this)
@@ -127,6 +127,19 @@ class ControllerActivity : Activity() {
         pad.toolbarAtBottom = bottom
     }
 
+    private fun showOptions() {
+        AlertDialog.Builder(this)
+            .setItems(arrayOf("Voltar ao menu", "Editar layout", "Continuar jogando")) { _, which ->
+                when (which) {
+                    0 -> finish()
+                    1 -> enterEdit()
+                }
+                hideSystemBars()
+            }
+            .setOnCancelListener { hideSystemBars() }
+            .show()
+    }
+
     private fun enterEdit() {
         pad.startEditing()
         toolbar.visibility = View.VISIBLE
@@ -176,6 +189,28 @@ class ControllerActivity : Activity() {
             }
             .setNegativeButton("Voltar") { _, _ -> hideSystemBars() }
             .show()
+    }
+
+    // ---- volume keys as gamepad buttons (Ajustes) ----------------------------------------------
+
+    private fun volumeTarget(keyCode: Int) = when (keyCode) {
+        KeyEvent.KEYCODE_VOLUME_UP -> Settings.volumeTarget(Settings.volumeUp)
+        KeyEvent.KEYCODE_VOLUME_DOWN -> Settings.volumeTarget(Settings.volumeDown)
+        else -> null
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        val t = volumeTarget(keyCode)
+        if (t == null || pad.editing) return super.onKeyDown(keyCode, event)
+        if (event.repeatCount == 0) pad.setExternal(keyCode, t, true)
+        return true
+    }
+
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
+        val t = volumeTarget(keyCode)
+        if (t == null || pad.editing) return super.onKeyUp(keyCode, event)
+        pad.setExternal(keyCode, t, false)
+        return true
     }
 
     @Deprecated("Back in edit mode cancels the edit instead of leaving the screen.")
