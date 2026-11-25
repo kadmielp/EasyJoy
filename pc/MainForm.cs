@@ -112,6 +112,10 @@ public sealed class MainForm : Form
         list.Controls.Add(_phones);
         layout.Controls.Add(list);
 
+        if (!_server.MotionAvailable)
+            layout.Controls.Add(MakeLabel($"Giroscópio para emuladores desligado: a porta {DsuServer.Port} já está em uso por outro programa (DS4Windows, BetterJoy...).",
+                9f, FontStyle.Regular, Bad, bottom: 18, maxWidth: ContentWidth));
+
         layout.Controls.Add(new Panel { Width = ContentWidth, Height = 1, BackColor = Line, Margin = new Padding(0, 0, 0, 14) });
 
         var autostart = new CheckBox
@@ -235,7 +239,9 @@ public sealed class MainForm : Form
         var tagColor = p.Mode switch { "Controle" => Accent, "Mouse" => Color.FromArgb(190, 150, 255), _ => Muted };
         var tagText = TextRenderer.MeasureText(p.Mode, _rowSmall);
         int tagW = tagText.Width + u / 4, tagH = tagText.Height + 2;
-        int nameMax = b.Right - pad - ipW - tagW - x - pad;
+        const string gyro = "Giroscópio";
+        int gyroW = p.Motion ? TextRenderer.MeasureText(gyro, _rowSmall).Width + u / 4 : 0;
+        int nameMax = b.Right - pad - ipW - tagW - (p.Motion ? gyroW + pad / 3 : 0) - x - pad;
         int nameW = Math.Min(TextRenderer.MeasureText(p.Name, _rowName).Width, Math.Max(0, nameMax));
         TextRenderer.DrawText(g, p.Name, _rowName, new Rectangle(x, b.Y, nameW, u), Color.White, mid | TextFormatFlags.EndEllipsis);
 
@@ -244,6 +250,16 @@ public sealed class MainForm : Form
         using (var fill = new SolidBrush(Color.FromArgb(40, tagColor)))
             g.FillPath(fill, path);
         TextRenderer.DrawText(g, p.Mode, _rowSmall, tag, tagColor, mid | TextFormatFlags.HorizontalCenter);
+
+        if (p.Motion)
+        {
+            var gyroColor = Good;
+            var gtag = new Rectangle(tag.Right + pad / 3, tag.Y, gyroW, tagH);
+            using (var path = Card.Rounded(gtag, tagH / 2))
+            using (var fill = new SolidBrush(Color.FromArgb(40, gyroColor)))
+                g.FillPath(fill, path);
+            TextRenderer.DrawText(g, gyro, _rowSmall, gtag, gyroColor, mid | TextFormatFlags.HorizontalCenter);
+        }
     }
 
     void RefreshPhones()

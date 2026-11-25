@@ -12,6 +12,7 @@ object Protocol {
     const val T_PING = 0x05
     const val T_PONG = 0x06
     const val T_GAMEPAD = 0x10
+    const val T_MOTION = 0x11
     const val T_MOUSE_MOVE = 0x20
     const val T_MOUSE_BUTTON = 0x21
     const val T_SCROLL = 0x22
@@ -70,6 +71,16 @@ object Protocol {
             .putShort(rx.toShort()).putShort(ry.toShort())
             .array()
 
+    /**
+     * Motion sample, already in DSU (Cemuhook) axes: accel in g, gyro in deg/s.
+     * [timestampUs] is the sensor clock in microseconds.
+     */
+    fun motion(timestampUs: Long, ax: Float, ay: Float, az: Float, pitch: Float, yaw: Float, roll: Float): ByteArray =
+        buf(T_MOTION, 32).putLong(timestampUs)
+            .putFloat(ax).putFloat(ay).putFloat(az)
+            .putFloat(pitch).putFloat(yaw).putFloat(roll)
+            .array()
+
     fun mouseMove(dx: Int, dy: Int): ByteArray =
         buf(T_MOUSE_MOVE, 4).putShort(dx.toShort()).putShort(dy.toShort()).array()
 
@@ -99,6 +110,10 @@ object Protocol {
     /** PC name from an ANNOUNCE packet, or null if it isn't one. */
     fun parseAnnounce(data: ByteArray, len: Int): String? =
         if (typeOf(data, len) == T_ANNOUNCE) String(data, 4, len - 4, Charsets.UTF_8) else null
+
+    /** PONG flag (bit 0 of the second byte): an emulator is listening for motion. Old PCs don't send it. */
+    fun pongMotionWanted(data: ByteArray, len: Int): Boolean =
+        typeOf(data, len) == T_PONG && len >= 6 && (data[5].toInt() and 1) != 0
 
     /** Status byte from a PONG packet (0 ok, 1 driver missing), or null if it isn't one. */
     fun parsePong(data: ByteArray, len: Int): Int? =

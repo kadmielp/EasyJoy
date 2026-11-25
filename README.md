@@ -49,7 +49,9 @@ The app has three tabs at the bottom, and the PC you're connected to is always s
 
 **Mouse mode:** works like a laptop touchpad. Drag to move · tap = left click · two-finger tap = right click · two-finger drag = scroll · double-tap and drag = drag items · pinch = zoom (Ctrl + wheel) · two-finger flick keeps scrolling and slows down · *Teclado* opens the phone keyboard to type on the PC.
 
-**Settings:** vibration on touch, mouse sensitivity, button size (80–120%), how far you turn for full steering (15–90°), and the phone's **volume keys** as controller buttons (e.g. Volume + = RT, Volume − = LT).
+**Settings:** vibration on touch, mouse sensitivity, button size (80–120%), how far you turn for full steering (15–90°), the phone's **volume keys** as controller buttons (e.g. Volume + = RT, Volume − = LT; the on-screen button lights up while you hold the key), and turning gyroscope motion for emulators on or off.
+
+**Motion (gyroscope) for emulators:** on the controller screens the phone also streams its gyroscope and accelerometer. The PC app serves them as a **DSU / Cemuhook** server on `127.0.0.1:26760`, the motion source that Eden, Cemu, Dolphin, Citra and Ryujinx support. Buttons and sticks still come from the Xbox controller; only motion goes over DSU. In Eden, check that *Controls → Advanced → Motion / Touch* lists the server `127.0.0.1:26760` (it's the default). Then click **Motion 1** and move the phone. The phone only turns its sensors on while an emulator is listening, and the PC app shows a green *Giroscópio* tag next to the phone while motion is flowing.
 
 ## Quick start
 

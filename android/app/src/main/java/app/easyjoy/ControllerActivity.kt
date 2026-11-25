@@ -239,9 +239,11 @@ class ControllerActivity : Activity() {
     override fun onResume() {
         super.onResume()
         pad.start()
+        Motion.start(this)
     }
 
     override fun onPause() {
+        Motion.stop()
         pad.stop()
         Connection.sendGamepad(0, 0, 0, 0, 0, 0, 0) // neutral state first, in case BYE is lost
         Connection.sendBye()

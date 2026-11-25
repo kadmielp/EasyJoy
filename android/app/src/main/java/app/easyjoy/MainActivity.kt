@@ -465,6 +465,17 @@ private fun SettingsTab(padding: PaddingValues, openPcs: () -> Unit) {
             }
         }
 
+        SectionTitle("Giroscópio")
+        PanelCard {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Movimento para emuladores", color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Switch(checked = Settings.motion, onCheckedChange = { Settings.updateMotion(it) })
+                }
+                Hint("Envia o giroscópio do celular para emuladores como Eden, Cemu e Dolphin (DSU). Só liga quando um emulador está ouvindo. Desligue para economizar bateria se não usa mira por movimento.")
+            }
+        }
+
         SectionTitle("Volante")
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

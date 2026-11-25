@@ -153,6 +153,7 @@ object Connection {
                     lastPong = System.currentTimeMillis()
                     driverMissing = status == 1
                     connected = true
+                    Motion.setWanted(Protocol.pongMotionWanted(buf, len))
                 }
             } catch (_: Exception) {
                 if (!running) break
@@ -183,6 +184,7 @@ object Connection {
             }
             val ok = ip != null && lastPong != 0L && now - lastPong <= 3000
             if (connected != ok) connected = ok
+            if (!ok) Motion.setWanted(false)
             if (discovered.any { now - it.lastSeen > 7000 }) {
                 discovered = discovered.filter { now - it.lastSeen <= 7000 }
             }
@@ -250,6 +252,9 @@ object Connection {
 
     fun sendGamepad(buttons: Int, lt: Int, rt: Int, lx: Int, ly: Int, rx: Int, ry: Int) =
         send(Protocol.gamepad(seq.incrementAndGet() and 0xFFFF, buttons, lt, rt, lx, ly, rx, ry))
+
+    fun sendMotion(timestampUs: Long, ax: Float, ay: Float, az: Float, pitch: Float, yaw: Float, roll: Float) =
+        send(Protocol.motion(timestampUs, ax, ay, az, pitch, yaw, roll))
 
     fun sendBye() {
         send(Protocol.bye())

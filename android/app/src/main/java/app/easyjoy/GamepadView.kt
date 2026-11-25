@@ -32,6 +32,8 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
     /** Called in edit mode when the selection or its visibility changes. */
     var onSelectionChanged: (() -> Unit)? = null
 
+    private companion object { const val DPAD_BITS = 0x000F }
+
     private enum class Kind { RECT, CIRCLE, STICK, DPAD }
 
     private class Elem(
@@ -488,7 +490,16 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
             }
             hitButton(p[0], p[1])?.pressed = true
         }
-        dpadMask = dp
+        // Volume keys light up the on-screen control they stand for.
+        var externalDpad = 0
+        for (t in external.values) {
+            externalDpad = externalDpad or (t.mask and DPAD_BITS)
+            for (b in elems) {
+                if (b.kind == Kind.STICK) continue
+                if ((t.mask != 0 && b.mask and t.mask != 0) || (t.trigger != 0 && b.trigger == t.trigger)) b.pressed = true
+            }
+        }
+        dpadMask = dp or externalDpad
 
         // "Centralizar": the current tilt becomes straight ahead.
         val centerPressed = el("CENTER")?.pressed == true

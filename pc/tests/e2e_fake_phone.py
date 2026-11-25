@@ -12,7 +12,7 @@ def check(name, cond, extra=""):
 s.sendto(hdr(0x01), (HOST, PORT)); d, _ = s.recvfrom(1024)
 check("discover->announce", d[:4] == hdr(0x02), d[4:].decode())
 s.sendto(hdr(0x05) + "TestPhone".encode(), (HOST, PORT)); d, _ = s.recvfrom(1024)
-check("ping->pong driver ok", d == hdr(0x06) + b"\x00", d.hex())
+check("ping->pong driver ok", d[:5] == hdr(0x06) + b"\x00", d.hex())
 
 class XGP(ctypes.Structure):
     _fields_ = [("wButtons", wintypes.WORD), ("bLeftTrigger", ctypes.c_ubyte), ("bRightTrigger", ctypes.c_ubyte),

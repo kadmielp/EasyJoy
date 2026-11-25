@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EasyJoy;
 
-public sealed record PhoneInfo(string Name, string Address, string Mode);
+public sealed record PhoneInfo(string Name, string Address, string Mode, bool Motion);
 
 // Listens on UDP, answers discovery/pings and turns packets into virtual pad / mouse / keyboard input.
 public sealed class Server : IDisposable
@@ -20,8 +20,12 @@ public sealed class Server : IDisposable
     readonly object _lock = new();
     readonly System.Threading.Timer _sweeper;
     readonly string _pcName = Environment.MachineName;
+    readonly DsuServer? _dsu;
 
-    public Server(GamepadHost gamepads, int port = Protocol.Port)
+    /// False when the DSU port was taken (e.g. another DSU server is running): motion is then ignored.
+    public bool MotionAvailable => _dsu != null;
+
+    public Server(GamepadHost gamepads, int port = Protocol.Port, int dsuPort = DsuServer.Port)
     {
         _gamepads = gamepads;
         _udp = new UdpClient(AddressFamily.InterNetwork);
@@ -29,13 +33,15 @@ public sealed class Server : IDisposable
         const int SIO_UDP_CONNRESET = -1744830452;
         _udp.Client.IOControl(SIO_UDP_CONNRESET, [0, 0, 0, 0], null);
         _udp.Client.Bind(new IPEndPoint(IPAddress.Any, port));
+        try { _dsu = new DsuServer(dsuPort); } catch (SocketException) { _dsu = null; }
         _sweeper = new System.Threading.Timer(_ => Sweep(), null, 1000, 1000);
         _ = Task.Run(ReceiveLoop);
     }
 
     public IReadOnlyList<PhoneInfo> Phones
     {
-        get { lock (_lock) return _phones.Values.Select(p => new PhoneInfo(p.Name, p.Address.ToString(), p.Mode)).ToList(); }
+        get { lock (_lock) return _phones.Values.Select(p => new PhoneInfo(p.Name, p.Address.ToString(), p.Mode,
+            p.DsuSlot != null && DateTime.UtcNow - p.LastMotion < TimeSpan.FromSeconds(2))).ToList(); }
     }
 
     async Task ReceiveLoop()
@@ -71,7 +77,7 @@ public sealed class Server : IDisposable
         {
             case PacketType.Ping:
                 if (body.Length > 0) phone.Name = Encoding.UTF8.GetString(body);
-                Reply(Protocol.Pong(_gamepads.Available), from);
+                Reply(Protocol.Pong(_gamepads.Available, _dsu?.HasClients ?? false), from);
                 break;
 
             case PacketType.Gamepad:
@@ -81,6 +87,13 @@ public sealed class Server : IDisposable
                 phone.HasSeq = true; phone.LastSeq = seq; phone.LastSeqTime = DateTime.UtcNow;
                 phone.Pad ??= _gamepads.CreatePad();
                 phone.Pad?.Apply(state);
+                break;
+
+            case PacketType.Motion:
+                if (_dsu == null || !Protocol.TryParseMotion(body, out var motion)) return;
+                phone.DsuSlot ??= FreeDsuSlot();
+                phone.LastMotion = DateTime.UtcNow;
+                if (phone.DsuSlot is int slot) _dsu.SendMotion(slot, motion);
                 break;
 
             case PacketType.MouseMove:
@@ -151,7 +164,16 @@ public sealed class Server : IDisposable
         phone.Pad?.Dispose();
         phone.Pad = null;
         phone.HasSeq = false;
+        if (phone.DsuSlot is int slot) _dsu?.SetActive(slot, false);
+        phone.DsuSlot = null;
         foreach (var b in phone.HeldButtons.ToList()) ReleaseButton(phone, b);
+    }
+
+    int? FreeDsuSlot()
+    {
+        for (int i = 0; i < DsuServer.Slots; i++)
+            if (!_phones.Values.Any(p => p.DsuSlot == i)) return i;
+        return null;
     }
 
     Phone GetPhone(IPAddress address)
@@ -190,6 +212,7 @@ public sealed class Server : IDisposable
         _cts.Cancel();
         _sweeper.Dispose();
         _udp.Dispose();
+        _dsu?.Dispose();
         lock (_lock)
         {
             foreach (var p in _phones.Values.ToList()) ReleaseAll(p);
@@ -204,6 +227,8 @@ public sealed class Server : IDisposable
         public string Mode { get; set; } = "Menu";
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
         public VirtualPad? Pad { get; set; }
+        public int? DsuSlot { get; set; }
+        public DateTime LastMotion { get; set; }
         public bool HasSeq { get; set; }
         public ushort LastSeq { get; set; }
         public DateTime LastSeqTime { get; set; }

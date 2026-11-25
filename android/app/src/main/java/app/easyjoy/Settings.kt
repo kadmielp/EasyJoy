@@ -16,6 +16,9 @@ object Settings {
 
     var vibration by mutableStateOf(true)
         private set
+    /** Send the gyroscope to emulators on the PC (DSU). */
+    var motion by mutableStateOf(true)
+        private set
     var sensitivity by mutableFloatStateOf(1.5f)
         private set
     /** Size multiplier for the gamepad controls (0.8..1.2). */
@@ -43,6 +46,7 @@ object Settings {
         val p = app.getSharedPreferences("easyjoy", Context.MODE_PRIVATE)
         prefs = p
         vibration = p.getBoolean("vibration", true)
+        motion = p.getBoolean("motion", true)
         sensitivity = p.getFloat("sensitivity", 1.5f)
         buttonScale = p.getFloat("buttonScale", 1f).coerceIn(MIN_SCALE, MAX_SCALE)
         tiltCenter = p.getFloat("tiltCenter", 0f)
@@ -58,6 +62,11 @@ object Settings {
     fun updateVibration(v: Boolean) {
         vibration = v
         prefs?.edit()?.putBoolean("vibration", v)?.apply()
+    }
+
+    fun updateMotion(v: Boolean) {
+        motion = v
+        prefs?.edit()?.putBoolean("motion", v)?.apply()
     }
 
     fun updateSensitivity(v: Float) {

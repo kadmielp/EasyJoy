@@ -26,6 +26,27 @@ class ProtocolTest {
         )
     }
 
+    @Test fun motion() {
+        val p = Protocol.motion(0x0102030405060708, 1f, -1f, 0f, 0.5f, 2f, -2f)
+        assertEquals(36, p.size)
+        assertArrayEquals(
+            pkt(
+                0x11,
+                0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01,
+                0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x80, 0xBF, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x3F, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0xC0,
+            ),
+            p
+        )
+    }
+
+    @Test fun pongMotionFlag() {
+        assertEquals(false, Protocol.pongMotionWanted(pkt(0x06, 0x00), 5))
+        assertEquals(true, Protocol.pongMotionWanted(pkt(0x06, 0x00, 0x01), 6))
+        assertEquals(false, Protocol.pongMotionWanted(pkt(0x06, 0x01, 0x00), 6))
+        assertEquals(false, Protocol.pongMotionWanted(pkt(0x02, 0x00, 0x01), 6))
+    }
+
     @Test fun gamepadSeqWraps() {
         val p = Protocol.gamepad(0x10000 + 5, Protocol.BTN_Y, 0, 0, 0, 0, 0, 0)
         assertEquals(5, p[4].toInt()); assertEquals(0, p[5].toInt())

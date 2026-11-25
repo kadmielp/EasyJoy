@@ -26,8 +26,9 @@ Todo pacote começa com o cabeçalho de 4 bytes: `'E' 'J' 0x01 <tipo>`. Pacotes 
 | `0x01` DISCOVER | celular → broadcast | vazio |
 | `0x02` ANNOUNCE | PC → celular (unicast, resposta ao DISCOVER) | nome do PC, UTF-8 |
 | `0x05` PING | celular → PC, a cada 1 s em qualquer tela conectada | UTF-8 nome do aparelho |
-| `0x06` PONG | PC → celular | `u8 status`: 0 = ok, 1 = driver de controle ausente (mouse funciona, controle não) |
+| `0x06` PONG | PC → celular | `u8 status`: 0 = ok, 1 = driver de controle ausente (mouse funciona, controle não); `u8 flags`: bit 0 = algum emulador está ouvindo o DSU (o celular só liga os sensores de movimento com ele ligado) |
 | `0x10` GAMEPAD | celular → PC | `u16 seq`, `u16 buttons`, `u8 lt`, `u8 rt`, `i16 lx`, `i16 ly`, `i16 rx`, `i16 ry` (18 bytes total) |
+| `0x11` MOTION | celular → PC, ~100 por segundo nas telas de controle | `u64 timestampUs` (relógio do sensor), `f32 ax, ay, az` (g), `f32 pitch, yaw, roll` (graus/s), já nos eixos do DSU (36 bytes total) |
 | `0x20` MOUSE_MOVE | celular → PC | `i16 dx`, `i16 dy` (pixels, já com sensibilidade aplicada no celular) |
 | `0x21` MOUSE_BUTTON | celular → PC | `u16 eventId`, `u8 button` (0 esq, 1 dir, 2 meio), `u8 action` (0 solta, 1 aperta, 2 clique) |
 | `0x22` SCROLL | celular → PC | `i16 vertical`, `i16 horizontal` (unidades de roda do Windows: 120 = um "dente"; positivo = rolar pra cima / direita) |
@@ -41,6 +42,7 @@ Regras:
 - **Gamepad**: o celular manda o estado inteiro a cada mudança e também a cada 50 ms. `buttons` usa as máscaras do XInput: Cima 0x0001, Baixo 0x0002, Esq 0x0004, Dir 0x0008, Start 0x0010, Back 0x0020, L3 0x0040, R3 0x0080, LB 0x0100, RB 0x0200, Guide 0x0400, A 0x1000, B 0x2000, X 0x4000, Y 0x8000. Eixos −32768..32767, **Y positivo = para cima**. O PC descarta pacote com `seq` mais antigo (comparação com wraparound: `(short)(seq - last) <= 0` → descarta, exceto se passou >1 s desde o último).
 - **Eventos únicos** (`0x21`, `0x23`, `0x24`) são enviados **3 vezes** com o mesmo `eventId`; o PC ignora `eventId` repetido (guarda os últimos 64 por celular).
 - O PC cria **um controle virtual por celular** (chave = IP) no primeiro GAMEPAD, e o remove após `BYE` ou 3 s sem nenhum pacote desse IP (antes de remover, zera o estado).
+- **Movimento**: o PC repassa o MOTION para um servidor **DSU (Cemuhook)** em `127.0.0.1:26760` (só local), que emuladores como Eden, Cemu e Dolphin leem como sensor de movimento. Um slot DSU (0–3) por celular, liberado no BYE ou no timeout. Só movimento: botões e analógicos continuam no Xbox 360 virtual. Eixos convertidos no celular (`Motion.kt`, conforme a rotação da tela): eixos do controle X direita, Y saindo da tela, Z para o jogador; acelerômetro enviado como direção da gravidade (deitado com a tela para cima = Y −1); giroscópio pitch = +X, yaw = −Y, roll = −Z. Convenção tirada do código do Eden (`udp_client.cpp` comparado com `sdl_driver.cpp`). Celular sem giroscópio não manda nada.
 - O celular considera a conexão perdida após 3 s sem PONG e mostra isso na tela.
 
 ## App Android

@@ -11,6 +11,7 @@ public enum PacketType : byte
     Ping = 0x05,
     Pong = 0x06,
     Gamepad = 0x10,
+    Motion = 0x11,
     MouseMove = 0x20,
     MouseButton = 0x21,
     Scroll = 0x22,
@@ -19,6 +20,9 @@ public enum PacketType : byte
     Zoom = 0x25,
     Bye = 0x30,
 }
+
+// Motion sample in DSU axes: accel in g, gyro in deg/s, timestamp in microseconds (phone sensor clock).
+public readonly record struct MotionSample(ulong TimestampUs, float AX, float AY, float AZ, float Pitch, float Yaw, float Roll);
 
 public readonly record struct GamepadState(ushort Buttons, byte LT, byte RT, short LX, short LY, short RX, short RY);
 
@@ -44,9 +48,12 @@ public static class Protocol
     }
 
     public static byte[] Announce(string pcName) => Build(PacketType.Announce, Encoding.UTF8.GetBytes(pcName));
-    public static byte[] Pong(bool gamepadAvailable) => Build(PacketType.Pong, [gamepadAvailable ? (byte)0 : (byte)1]);
+    // Second byte, bit 0: an emulator is subscribed to DSU motion, so the phone should stream its sensors.
+    public static byte[] Pong(bool gamepadAvailable, bool motionWanted) =>
+        Build(PacketType.Pong, [gamepadAvailable ? (byte)0 : (byte)1, motionWanted ? (byte)1 : (byte)0]);
 
     public static ushort U16(ReadOnlySpan<byte> d, int offset) => BinaryPrimitives.ReadUInt16LittleEndian(d[offset..]);
+    public static float F32(ReadOnlySpan<byte> d, int offset) => BinaryPrimitives.ReadSingleLittleEndian(d[offset..]);
     public static short I16(ReadOnlySpan<byte> d, int offset) => BinaryPrimitives.ReadInt16LittleEndian(d[offset..]);
 
     // body = data after the header
@@ -57,5 +64,14 @@ public static class Protocol
         seq = U16(body, 0);
         state = new GamepadState(U16(body, 2), body[4], body[5], I16(body, 6), I16(body, 8), I16(body, 10), I16(body, 12));
         return true;
+    }
+
+    public static bool TryParseMotion(ReadOnlySpan<byte> body, out MotionSample m)
+    {
+        m = default;
+        if (body.Length < 32) return false;
+        m = new MotionSample(BinaryPrimitives.ReadUInt64LittleEndian(body),
+            F32(body, 8), F32(body, 12), F32(body, 16), F32(body, 20), F32(body, 24), F32(body, 28));
+        return float.IsFinite(m.AX + m.AY + m.AZ + m.Pitch + m.Yaw + m.Roll);
     }
 }
