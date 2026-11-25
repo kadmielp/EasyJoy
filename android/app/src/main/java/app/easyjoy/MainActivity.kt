@@ -73,17 +73,23 @@ private val Bg = Color(0xFF0E0F12)
 private val Panel = Color(0xFF1B1D23)
 private val Muted = Color(0xFF9AA0AE)
 
-private enum class Tab(val label: String, val icon: Int) {
-    LAYOUTS("Layouts", R.drawable.ic_tab_layouts),
-    PLAY("Jogar", R.drawable.ic_tab_pad),
-    SETTINGS("Ajustes", R.drawable.ic_tab_settings),
+private enum class Tab(val icon: Int) {
+    LAYOUTS(R.drawable.ic_tab_layouts),
+    PLAY(R.drawable.ic_tab_pad),
+    SETTINGS(R.drawable.ic_tab_settings);
+
+    val label: String get() = when (this) {
+        LAYOUTS -> tr("Layouts", "Layouts", "Diseños")
+        PLAY -> tr("Jogar", "Play", "Jugar")
+        SETTINGS -> tr("Ajustes", "Settings", "Ajustes")
+    }
 }
 
-/** Built-in layouts, in menu order. */
-private val Bases = listOf(
-    Triple(Layouts.FULL, "Controle Xbox com todos os botões", Color(0xFF107C10)),
-    Triple(Layouts.SIMPLE, "Um analógico grande e botões grandes", Color(0xFF2F7CF6)),
-    Triple(Layouts.WHEEL, "Gire o celular para dirigir", Color(0xFFC0392B)),
+/** Built-in layouts, in menu order (a getter, so the subtitles follow the language). */
+private val Bases get() = listOf(
+    Triple(Layouts.FULL, tr("Controle Xbox com todos os botões", "Xbox controller with every button", "Control de Xbox con todos los botones"), Color(0xFF107C10)),
+    Triple(Layouts.SIMPLE, tr("Um analógico grande e botões grandes", "One big stick and big buttons", "Un stick grande y botones grandes"), Color(0xFF2F7CF6)),
+    Triple(Layouts.WHEEL, tr("Gire o celular para dirigir", "Turn the phone to steer", "Gira el teléfono para conducir"), Color(0xFFC0392B)),
 )
 
 class MainActivity : ComponentActivity() {
@@ -149,7 +155,7 @@ class MainActivity : ComponentActivity() {
                             Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).navigationBarsPadding(),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
-                            Text("Computador", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(tr("Computador", "Computer", "Computadora"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             PcPicker(onPicked = { pcSheet = false })
                             Spacer(Modifier.height(12.dp))
                         }
@@ -203,8 +209,8 @@ private fun ConnectionChip(onClick: () -> Unit) {
     val target = Connection.targetIp
     val (dot, label) = when {
         connected -> Green to (Connection.targetName() ?: target ?: "")
-        target != null -> Amber to "Conectando…"
-        else -> Red to "Sem PC"
+        target != null -> Amber to tr("Conectando…", "Connecting…", "Conectando…")
+        else -> Red to tr("Sem PC", "No PC", "Sin PC")
     }
     Row(
         Modifier.clip(RoundedCornerShape(50)).background(Panel).clickable(onClick = onClick)
@@ -248,20 +254,21 @@ private fun PcPicker(onPicked: () -> Unit = {}) {
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(Connection.targetName() ?: target, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    Text(if (connected) "Conectado" else "Procurando…", color = Muted, fontSize = 13.sp)
+                    Text(if (connected) tr("Conectado", "Connected", "Conectado") else tr("Procurando…", "Searching…", "Buscando…"), color = Muted, fontSize = 13.sp)
                 }
-                TextButton(onClick = { Connection.disconnect() }) { Text("Desconectar", color = Color(0xFFFF8A8E)) }
+                TextButton(onClick = { Connection.disconnect() }) { Text(tr("Desconectar", "Disconnect", "Desconectar"), color = Color(0xFFFF8A8E)) }
             }
         }
         if (connected && Connection.driverMissing) {
-            Text("Driver de controle não instalado no PC — o modo mouse funciona", color = Amber, fontSize = 14.sp)
+            Text(tr("Driver de controle não instalado no PC — o modo mouse funciona", "Controller driver not installed on the PC — mouse mode works", "Driver de control no instalado en el PC — el modo ratón funciona"), color = Amber, fontSize = 14.sp)
         }
     }
 
-    SectionTitle("PCs na rede")
+    SectionTitle(tr("PCs na rede", "PCs on the network", "PCs en la red"))
     val pcs = Connection.discovered.filter { it.ip != target }
     if (pcs.isEmpty()) {
-        Hint(if (target == null) "Procurando PCs na rede Wi-Fi… Abra o EasyJoy no PC." else "Nenhum outro PC encontrado.")
+        Hint(if (target == null) tr("Procurando PCs na rede Wi-Fi… Abra o EasyJoy no PC.", "Looking for PCs on the Wi-Fi… Open EasyJoy on the PC.", "Buscando PCs en la red Wi-Fi… Abre EasyJoy en el PC.")
+            else tr("Nenhum outro PC encontrado.", "No other PC found.", "No se encontró otro PC."))
     }
     for (pc in pcs) {
         PanelCard(Modifier.clickable { Connection.connect(pc.ip, pc.name); onPicked() }) {
@@ -276,7 +283,7 @@ private fun PcPicker(onPicked: () -> Unit = {}) {
         OutlinedTextField(
             value = manualIp,
             onValueChange = { manualIp = it.trim(); ipError = false },
-            label = { Text("Ou digite o IP do PC") },
+            label = { Text(tr("Ou digite o IP do PC", "Or type the PC's IP", "O escribe la IP del PC")) },
             placeholder = { Text("192.168.0.10") },
             isError = ipError,
             singleLine = true,
@@ -289,9 +296,9 @@ private fun PcPicker(onPicked: () -> Unit = {}) {
             ) {
                 Connection.connect(manualIp); onPicked()
             } else ipError = true
-        }) { Text("Conectar") }
+        }) { Text(tr("Conectar", "Connect", "Conectar")) }
     }
-    if (ipError) Text("IP inválido", color = Red, fontSize = 13.sp)
+    if (ipError) Text(tr("IP inválido", "Invalid IP", "IP no válida"), color = Red, fontSize = 13.sp)
 }
 
 // ---- Jogar ---------------------------------------------------------------------------------
@@ -303,24 +310,24 @@ private fun PlayTab(
     onPlay: (base: String, layout: String?) -> Unit,
     onMouse: () -> Unit,
 ) {
-    TabPage(padding, "Jogar", openPcs) {
+    TabPage(padding, Tab.PLAY.label, openPcs) {
         if (!Connection.connected) {
-            Hint("Conecte-se a um PC para começar. O celular e o PC precisam estar no mesmo Wi-Fi.")
+            Hint(tr("Conecte-se a um PC para começar. O celular e o PC precisam estar no mesmo Wi-Fi.", "Connect to a PC to start. The phone and the PC must be on the same Wi-Fi.", "Conéctate a un PC para empezar. El teléfono y el PC deben estar en la misma Wi-Fi."))
             PcPicker()
             return@TabPage
         }
         if (Connection.driverMissing) {
-            Text("Driver de controle não instalado no PC — o modo mouse funciona", color = Amber, fontSize = 14.sp)
+            Text(tr("Driver de controle não instalado no PC — o modo mouse funciona", "Controller driver not installed on the PC — mouse mode works", "Driver de control no instalado en el PC — el modo ratón funciona"), color = Amber, fontSize = 14.sp)
         }
 
         for ((base, subtitle, color) in Bases) {
             ModeCard(Layouts.baseLabel(base), subtitle, color) { onPlay(base, null) }
         }
-        ModeCard("Mouse", "Touchpad, rolagem e teclado", Color(0xFFB8860B), onMouse)
+        ModeCard(tr("Mouse", "Mouse", "Ratón"), tr("Touchpad, rolagem e teclado", "Touchpad, scrolling and keyboard", "Touchpad, desplazamiento y teclado"), Color(0xFFB8860B), onMouse)
 
-        SectionTitle("Meus layouts")
+        SectionTitle(tr("Meus layouts", "My layouts", "Mis diseños"))
         val layouts = Layouts.saved
-        if (layouts.isEmpty()) Hint("Você ainda não tem layouts. Crie o seu na aba Layouts.")
+        if (layouts.isEmpty()) Hint(tr("Você ainda não tem layouts. Crie o seu na aba Layouts.", "You have no layouts yet. Create yours in the Layouts tab.", "Aún no tienes diseños. Crea el tuyo en la pestaña Diseños."))
         for (l in layouts) {
             PanelCard(Modifier.clickable { onPlay(l.base, l.name) }) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -338,7 +345,7 @@ private fun PlayTab(
 }
 
 private fun baseColor(base: String) = Bases.first { it.first == base }.third
-private fun layoutSubtitle(l: Layout) = "Base: " + Layouts.baseLabel(l.base) + if (l.tilt) " · volante ligado" else ""
+private fun layoutSubtitle(l: Layout) = "Base: " + Layouts.baseLabel(l.base) + if (l.tilt) tr(" · volante ligado", " · wheel on", " · volante activado") else ""
 
 @Composable
 private fun ModeCard(title: String, subtitle: String, color: Color, onClick: () -> Unit) {
@@ -360,12 +367,12 @@ private fun ModeCard(title: String, subtitle: String, color: Color, onClick: () 
 private fun LayoutsTab(padding: PaddingValues, openPcs: () -> Unit, onEdit: (base: String, name: String?) -> Unit) {
     var toDelete by remember { mutableStateOf<String?>(null) }
 
-    TabPage(padding, "Layouts", openPcs) {
-        Hint("Mude botões de lugar, tamanho, esconda o que não usa e ligue o volante. Funciona mesmo sem PC conectado.")
+    TabPage(padding, Tab.LAYOUTS.label, openPcs) {
+        Hint(tr("Mude botões de lugar, tamanho, esconda o que não usa e ligue o volante. Funciona mesmo sem PC conectado.", "Move and resize buttons, hide what you don't use and turn on the wheel. Works even with no PC connected.", "Mueve botones, cambia su tamaño, oculta lo que no usas y activa el volante. Funciona incluso sin PC conectado."))
 
-        SectionTitle("Meus layouts")
+        SectionTitle(tr("Meus layouts", "My layouts", "Mis diseños"))
         val layouts = Layouts.saved
-        if (layouts.isEmpty()) Hint("Nenhum ainda. Comece a partir de um modelo abaixo.")
+        if (layouts.isEmpty()) Hint(tr("Nenhum ainda. Comece a partir de um modelo abaixo.", "None yet. Start from a template below.", "Ninguno aún. Empieza desde una plantilla abajo."))
         for (l in layouts) {
             PanelCard {
                 Column(Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
@@ -378,15 +385,15 @@ private fun LayoutsTab(padding: PaddingValues, openPcs: () -> Unit, onEdit: (bas
                         }
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { onEdit(l.base, l.name) }) { Text("Editar") }
-                        TextButton(onClick = { Layouts.save(l.copy(name = copyName(l.name))) }) { Text("Duplicar") }
-                        TextButton(onClick = { toDelete = l.name }) { Text("Apagar", color = Color(0xFFFF8A8E)) }
+                        TextButton(onClick = { onEdit(l.base, l.name) }) { Text(tr("Editar", "Edit", "Editar")) }
+                        TextButton(onClick = { Layouts.save(l.copy(name = copyName(l.name))) }) { Text(tr("Duplicar", "Duplicate", "Duplicar")) }
+                        TextButton(onClick = { toDelete = l.name }) { Text(tr("Apagar", "Delete", "Borrar"), color = Color(0xFFFF8A8E)) }
                     }
                 }
             }
         }
 
-        SectionTitle("Criar a partir de um modelo")
+        SectionTitle(tr("Criar a partir de um modelo", "Create from a template", "Crear desde una plantilla"))
         for ((base, subtitle, color) in Bases) {
             PanelCard(Modifier.clickable { onEdit(base, null) }) {
                 Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -396,7 +403,7 @@ private fun LayoutsTab(padding: PaddingValues, openPcs: () -> Unit, onEdit: (bas
                         Text(Layouts.baseLabel(base), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium)
                         Text(subtitle, color = Muted, fontSize = 13.sp)
                     }
-                    Text("Personalizar", color = Green, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(tr("Personalizar", "Customize", "Personalizar"), color = Green, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 }
             }
         }
@@ -405,10 +412,10 @@ private fun LayoutsTab(padding: PaddingValues, openPcs: () -> Unit, onEdit: (bas
     toDelete?.let { name ->
         AlertDialog(
             onDismissRequest = { toDelete = null },
-            title = { Text("Apagar layout?") },
-            text = { Text("O layout \"$name\" será apagado. Isso não pode ser desfeito.") },
-            confirmButton = { TextButton(onClick = { Layouts.delete(name); toDelete = null }) { Text("Apagar") } },
-            dismissButton = { TextButton(onClick = { toDelete = null }) { Text("Cancelar") } },
+            title = { Text(tr("Apagar layout?", "Delete layout?", "¿Borrar diseño?")) },
+            text = { Text(tr("O layout \"$name\" será apagado. Isso não pode ser desfeito.", "The layout \"$name\" will be deleted. This can't be undone.", "El diseño \"$name\" se borrará. Esto no se puede deshacer.")) },
+            confirmButton = { TextButton(onClick = { Layouts.delete(name); toDelete = null }) { Text(tr("Apagar", "Delete", "Borrar")) } },
+            dismissButton = { TextButton(onClick = { toDelete = null }) { Text(tr("Cancelar", "Cancel", "Cancelar")) } },
         )
     }
 }
@@ -416,9 +423,10 @@ private fun LayoutsTab(padding: PaddingValues, openPcs: () -> Unit, onEdit: (bas
 /** "Nome (cópia)", "Nome (cópia 2)", … — a name not used yet. */
 private fun copyName(name: String): String {
     val taken = Layouts.saved.map { it.name }.toSet()
-    var candidate = "$name (cópia)"
+    val copy = tr("cópia", "copy", "copia")
+    var candidate = "$name ($copy)"
     var n = 2
-    while (candidate in taken) candidate = "$name (cópia ${n++})"
+    while (candidate in taken) candidate = "$name ($copy ${n++})"
     return candidate
 }
 
@@ -447,15 +455,15 @@ private fun VolumePicker(label: String, current: String, onPick: (String) -> Uni
 
 @Composable
 private fun SettingsTab(padding: PaddingValues, openPcs: () -> Unit) {
-    TabPage(padding, "Ajustes", openPcs) {
-        SectionTitle("Controle")
+    TabPage(padding, Tab.SETTINGS.label, openPcs) {
+        SectionTitle(tr("Controle", "Controller", "Control"))
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Vibração ao tocar", color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Text(tr("Vibração ao tocar", "Vibrate on touch", "Vibrar al tocar"), color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
                     Switch(checked = Settings.vibration, onCheckedChange = { Settings.updateVibration(it) })
                 }
-                Text("Tamanho dos botões: ${Math.round(Settings.buttonScale * 100)}%", color = Color.White, fontSize = 16.sp)
+                Text(tr("Tamanho dos botões", "Button size", "Tamaño de los botones") + ": ${Math.round(Settings.buttonScale * 100)}%", color = Color.White, fontSize = 16.sp)
                 Slider(
                     value = Settings.buttonScale,
                     onValueChange = { Settings.updateButtonScale(Math.round(it * 20f) / 20f) },
@@ -465,48 +473,85 @@ private fun SettingsTab(padding: PaddingValues, openPcs: () -> Unit) {
             }
         }
 
-        SectionTitle("Giroscópio")
+        SectionTitle(tr("Giroscópio", "Gyroscope", "Giroscopio"))
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Movimento para emuladores", color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                    Text(tr("Movimento para emuladores", "Motion for emulators", "Movimiento para emuladores"), color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
                     Switch(checked = Settings.motion, onCheckedChange = { Settings.updateMotion(it) })
                 }
-                Hint("Envia o giroscópio do celular para emuladores como Eden, Cemu e Dolphin (DSU). Só liga quando um emulador está ouvindo. Desligue para economizar bateria se não usa mira por movimento.")
+                Hint(tr(
+                    "Envia o giroscópio do celular para emuladores como Eden, Cemu e Dolphin (DSU). Só liga quando um emulador está ouvindo. Desligue para economizar bateria se não usa mira por movimento.",
+                    "Sends the phone's gyroscope to emulators like Eden, Cemu and Dolphin (DSU). It only runs while an emulator is listening. Turn it off to save battery if you don't use motion aiming.",
+                    "Envía el giroscopio del teléfono a emuladores como Eden, Cemu y Dolphin (DSU). Solo se activa cuando un emulador está escuchando. Desactívalo para ahorrar batería si no usas apuntado por movimiento.",
+                ))
             }
         }
 
-        SectionTitle("Volante")
+        SectionTitle(tr("Volante", "Wheel", "Volante"))
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Girar ${Math.round(Settings.tiltMax)}° = direção toda", color = Color.White, fontSize = 16.sp)
+                Text(tr("Girar ${Math.round(Settings.tiltMax)}° = direção toda", "Turn ${Math.round(Settings.tiltMax)}° = full steering", "Girar ${Math.round(Settings.tiltMax)}° = giro completo"), color = Color.White, fontSize = 16.sp)
                 Slider(
                     value = Settings.tiltMax,
                     onValueChange = { Settings.updateTiltMax((Math.round(it / 5f) * 5).toFloat()) },
                     valueRange = 15f..90f,
                     steps = 14,
                 )
-                Hint("Menor = mais sensível. Use o botão \"Centralizar\" no volante para definir a posição reta.")
+                Hint(tr(
+                    "Menor = mais sensível. Use o botão \"Centralizar\" no volante para definir a posição reta.",
+                    "Lower = more sensitive. Use the \"Center\" button on the wheel to set the straight position.",
+                    "Menor = más sensible. Usa el botón \"Centrar\" en el volante para fijar la posición recta.",
+                ))
             }
         }
 
-        SectionTitle("Botões de volume")
+        SectionTitle(tr("Botões de volume", "Volume buttons", "Botones de volumen"))
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                VolumePicker("Volume +", Settings.volumeUp, Settings::updateVolumeUp)
-                VolumePicker("Volume −", Settings.volumeDown, Settings::updateVolumeDown)
-                Hint("Nas telas de controle, os botões de volume do celular apertam o botão escolhido. Em \"Nenhum\", mudam o volume normalmente.")
+                VolumePicker(tr("Volume +", "Volume +", "Volumen +"), Settings.volumeUp, Settings::updateVolumeUp)
+                VolumePicker(tr("Volume −", "Volume −", "Volumen −"), Settings.volumeDown, Settings::updateVolumeDown)
+                Hint(tr(
+                    "Nas telas de controle, os botões de volume do celular apertam o botão escolhido. Em \"Nenhum\", mudam o volume normalmente.",
+                    "On controller screens, the phone's volume buttons press the chosen button. On \"None\", they change the volume as usual.",
+                    "En las pantallas de control, los botones de volumen del teléfono pulsan el botón elegido. En \"Ninguno\", cambian el volumen normalmente.",
+                ))
             }
         }
 
-        SectionTitle("Mouse")
+        SectionTitle(tr("Mouse", "Mouse", "Ratón"))
         PanelCard {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Sensibilidade: ${"%.1f".format(Settings.sensitivity)}x", color = Color.White, fontSize = 16.sp)
+                Text(tr("Sensibilidade", "Sensitivity", "Sensibilidad") + ": ${"%.1f".format(Settings.sensitivity)}x", color = Color.White, fontSize = 16.sp)
                 Slider(
                     value = Settings.sensitivity,
                     onValueChange = { Settings.updateSensitivity(Math.round(it * 10f) / 10f) },
                     valueRange = 0.5f..4f,
+                )
+            }
+        }
+
+        SectionTitle(tr("Idioma", "Language", "Idioma"))
+        PanelCard {
+            Column(Modifier.padding(16.dp)) {
+                LanguagePicker()
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguagePicker() {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        OutlinedButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth()) {
+            Text(I18n.choiceLabel(Settings.language) + "  ▾", maxLines = 1)
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            for (c in I18n.Choices) {
+                DropdownMenuItem(
+                    text = { Text(I18n.choiceLabel(c), color = if (c == Settings.language) Green else Color.Unspecified) },
+                    onClick = { Settings.updateLanguage(c); open = false },
                 )
             }
         }

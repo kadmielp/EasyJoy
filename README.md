@@ -18,7 +18,7 @@
 
 Games and emulators see a regular **Xbox 360 controller** — no per-game setup. The phone finds the PC by itself; no IP typing.
 
-> The app's interface is in Brazilian Portuguese.
+> The app is in English, Portuguese and Spanish. The phone app follows the phone's language (change it in *Settings → Language*); the PC app follows the Windows display language.
 
 ## Features
 

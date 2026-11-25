@@ -21,7 +21,7 @@ public sealed class MainForm : Form
     static readonly Color Bad = Color.FromArgb(255, 120, 110);
     const int ContentWidth = 392; // logical px
     const int RowHeight = 38;     // phone list row, logical px
-    const string EmptyText = "Nenhum ainda. Abra o EasyJoy no celular.";
+    static readonly string EmptyText = L.T("Nenhum ainda. Abra o EasyJoy no celular.", "None yet. Open EasyJoy on your phone.", "Ninguno aún. Abre EasyJoy en el teléfono.");
 
     readonly Server _server;
     readonly GamepadHost _gamepads;
@@ -67,34 +67,34 @@ public sealed class MainForm : Form
         });
         var titles = Stack();
         titles.Controls.Add(MakeLabel("EasyJoy", 20f, FontStyle.Bold, Color.White, bottom: 0));
-        titles.Controls.Add(MakeLabel("Use o celular como controle ou mouse deste PC.", 9.5f, FontStyle.Regular, Muted, bottom: 0));
+        titles.Controls.Add(MakeLabel(L.T("Use o celular como controle ou mouse deste PC.", "Use your phone as a controller or mouse for this PC.", "Usa el teléfono como control o ratón de este PC."), 9.5f, FontStyle.Regular, Muted, bottom: 0));
         header.Controls.Add(titles);
         layout.Controls.Add(header);
 
         // Driver status
         if (_gamepads.Available)
         {
-            layout.Controls.Add(new Pill("Controle virtual pronto", Good) { Margin = new Padding(0, 0, 0, 20) });
+            layout.Controls.Add(new Pill(L.T("Controle virtual pronto", "Virtual controller ready", "Control virtual listo"), Good) { Margin = new Padding(0, 0, 0, 20) });
         }
         else
         {
-            layout.Controls.Add(new Pill("Driver de controle (ViGEmBus) não encontrado", Bad) { Margin = new Padding(0, 0, 0, 8) });
-            layout.Controls.Add(MakeLabel("O modo mouse funciona. Para o modo controle, instale o driver e abra o EasyJoy de novo.", 9f, FontStyle.Regular, Muted, bottom: 4, maxWidth: ContentWidth));
-            var link = new LinkLabel { Text = "Baixar o driver ViGEmBus", Font = new Font("Segoe UI", 10f), AutoSize = true, LinkColor = Accent, ActiveLinkColor = Color.White, Margin = new Padding(0, 0, 0, 20) };
+            layout.Controls.Add(new Pill(L.T("Driver de controle (ViGEmBus) não encontrado", "Controller driver (ViGEmBus) not found", "Driver de control (ViGEmBus) no encontrado"), Bad) { Margin = new Padding(0, 0, 0, 8) });
+            layout.Controls.Add(MakeLabel(L.T("O modo mouse funciona. Para o modo controle, instale o driver e abra o EasyJoy de novo.", "Mouse mode works. For controller mode, install the driver and open EasyJoy again.", "El modo ratón funciona. Para el modo control, instala el driver y abre EasyJoy de nuevo."), 9f, FontStyle.Regular, Muted, bottom: 4, maxWidth: ContentWidth));
+            var link = new LinkLabel { Text = L.T("Baixar o driver ViGEmBus", "Download the ViGEmBus driver", "Descargar el driver ViGEmBus"), Font = new Font("Segoe UI", 10f), AutoSize = true, LinkColor = Accent, ActiveLinkColor = Color.White, Margin = new Padding(0, 0, 0, 20) };
             link.LinkClicked += (_, _) => Open(DriverUrl);
             layout.Controls.Add(link);
         }
 
         // How to connect
-        layout.Controls.Add(Section("CONECTAR"));
+        layout.Controls.Add(Section(L.T("CONECTAR", "CONNECT", "CONECTAR")));
         var connect = new Card(ContentWidth) { Margin = new Padding(0, 0, 0, 20) };
-        connect.Controls.Add(MakeLabel("No celular, abra o EasyJoy e toque em:", 9.5f, FontStyle.Regular, Muted, bottom: 2));
+        connect.Controls.Add(MakeLabel(L.T("No celular, abra o EasyJoy e toque em:", "On your phone, open EasyJoy and tap:", "En el teléfono, abre EasyJoy y toca:"), 9.5f, FontStyle.Regular, Muted, bottom: 2));
         connect.Controls.Add(MakeLabel(Environment.MachineName, 16f, FontStyle.Bold, Color.White, bottom: 2, maxWidth: ContentWidth - 36));
         connect.Controls.Add(MakeLabel("IP  " + string.Join("   ·   ", LocalAddresses()), 9.5f, FontStyle.Regular, Muted, bottom: 0, maxWidth: ContentWidth - 36));
         layout.Controls.Add(connect);
 
         // Connected phones
-        layout.Controls.Add(Section("CELULARES CONECTADOS"));
+        layout.Controls.Add(Section(L.T("CELULARES CONECTADOS", "CONNECTED PHONES", "TELÉFONOS CONECTADOS")));
         var list = new Card(ContentWidth) { Padding = new Padding(4), Margin = new Padding(0, 0, 0, 18) };
         _phones = new ListBox
         {
@@ -113,14 +113,17 @@ public sealed class MainForm : Form
         layout.Controls.Add(list);
 
         if (!_server.MotionAvailable)
-            layout.Controls.Add(MakeLabel($"Giroscópio para emuladores desligado: a porta {DsuServer.Port} já está em uso por outro programa (DS4Windows, BetterJoy...).",
+            layout.Controls.Add(MakeLabel(L.T(
+                $"Giroscópio para emuladores desligado: a porta {DsuServer.Port} já está em uso por outro programa (DS4Windows, BetterJoy...).",
+                $"Gyroscope for emulators is off: port {DsuServer.Port} is already used by another program (DS4Windows, BetterJoy...).",
+                $"Giroscopio para emuladores desactivado: el puerto {DsuServer.Port} ya está en uso por otro programa (DS4Windows, BetterJoy...)."),
                 9f, FontStyle.Regular, Bad, bottom: 18, maxWidth: ContentWidth));
 
         layout.Controls.Add(new Panel { Width = ContentWidth, Height = 1, BackColor = Line, Margin = new Padding(0, 0, 0, 14) });
 
         var autostart = new CheckBox
         {
-            Text = "Iniciar com o Windows (na bandeja)",
+            Text = L.T("Iniciar com o Windows (na bandeja)", "Start with Windows (in the tray)", "Iniciar con Windows (en la bandeja)"),
             Font = new Font("Segoe UI", 10f),
             AutoSize = true,
             Checked = IsAutostart(),
@@ -132,8 +135,8 @@ public sealed class MainForm : Form
         autostart.CheckedChanged += (_, _) => SetAutostart(autostart.Checked);
         layout.Controls.Add(autostart);
 
-        const string ask = "Celular não encontra o PC?  ";
-        const string action = "Liberar no Firewall";
+        string ask = L.T("Celular não encontra o PC?  ", "Phone can't find the PC?  ", "¿El teléfono no encuentra el PC?  ");
+        string action = L.T("Liberar no Firewall", "Allow in Firewall", "Permitir en el Firewall");
         var firewall = new LinkLabel
         {
             Text = ask + action,
@@ -151,9 +154,9 @@ public sealed class MainForm : Form
 
         // Tray
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Abrir EasyJoy", null, (_, _) => ShowFromTray());
+        menu.Items.Add(L.T("Abrir EasyJoy", "Open EasyJoy", "Abrir EasyJoy"), null, (_, _) => ShowFromTray());
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Sair", null, (_, _) => ExitApp());
+        menu.Items.Add(L.T("Sair", "Exit", "Salir"), null, (_, _) => ExitApp());
         _tray = new NotifyIcon { Icon = icon, Text = "EasyJoy", Visible = true, ContextMenuStrip = menu };
         _tray.DoubleClick += (_, _) => ShowFromTray();
         _tray.MouseClick += (_, e) => { if (e.Button == MouseButtons.Left) ShowFromTray(); };
@@ -237,9 +240,10 @@ public sealed class MainForm : Form
         TextRenderer.DrawText(g, p.Address, _rowSmall, new Rectangle(b.Right - pad - ipW, b.Y, ipW, u), Muted, mid);
 
         var tagColor = p.Mode switch { "Controle" => Accent, "Mouse" => Color.FromArgb(190, 150, 255), _ => Muted };
-        var tagText = TextRenderer.MeasureText(p.Mode, _rowSmall);
+        string mode = p.Mode switch { "Controle" => L.T("Controle", "Controller", "Control"), "Mouse" => L.T("Mouse", "Mouse", "Ratón"), _ => p.Mode };
+        var tagText = TextRenderer.MeasureText(mode, _rowSmall);
         int tagW = tagText.Width + u / 4, tagH = tagText.Height + 2;
-        const string gyro = "Giroscópio";
+        string gyro = L.T("Giroscópio", "Gyroscope", "Giroscopio");
         int gyroW = p.Motion ? TextRenderer.MeasureText(gyro, _rowSmall).Width + u / 4 : 0;
         int nameMax = b.Right - pad - ipW - tagW - (p.Motion ? gyroW + pad / 3 : 0) - x - pad;
         int nameW = Math.Min(TextRenderer.MeasureText(p.Name, _rowName).Width, Math.Max(0, nameMax));
@@ -249,7 +253,7 @@ public sealed class MainForm : Form
         using (var path = Card.Rounded(tag, tagH / 2))
         using (var fill = new SolidBrush(Color.FromArgb(40, tagColor)))
             g.FillPath(fill, path);
-        TextRenderer.DrawText(g, p.Mode, _rowSmall, tag, tagColor, mid | TextFormatFlags.HorizontalCenter);
+        TextRenderer.DrawText(g, mode, _rowSmall, tag, tagColor, mid | TextFormatFlags.HorizontalCenter);
 
         if (p.Motion)
         {
@@ -273,7 +277,8 @@ public sealed class MainForm : Form
             _phones.Items.AddRange(items);
             _phones.EndUpdate();
         }
-        _tray.Text = phones.Count == 0 ? "EasyJoy — aguardando celular" : $"EasyJoy — {phones.Count} conectado(s)";
+        _tray.Text = phones.Count == 0 ? L.T("EasyJoy — aguardando celular", "EasyJoy — waiting for a phone", "EasyJoy — esperando teléfono")
+            : "EasyJoy — " + L.T($"{phones.Count} conectado(s)", $"{phones.Count} connected", $"{phones.Count} conectado(s)");
     }
 
     public void ShowFromTray()
@@ -298,7 +303,10 @@ public sealed class MainForm : Form
             if (!_trayHintShown)
             {
                 _trayHintShown = true;
-                _tray.ShowBalloonTip(3000, "EasyJoy continua rodando", "Ele fica aqui na bandeja. Clique com o botão direito para sair.", ToolTipIcon.Info);
+                _tray.ShowBalloonTip(3000,
+                    L.T("EasyJoy continua rodando", "EasyJoy is still running", "EasyJoy sigue en ejecución"),
+                    L.T("Ele fica aqui na bandeja. Clique com o botão direito para sair.", "It stays here in the tray. Right-click to exit.", "Se queda aquí en la bandeja. Haz clic derecho para salir."),
+                    ToolTipIcon.Info);
             }
             return;
         }
@@ -320,7 +328,7 @@ public sealed class MainForm : Form
                 .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork)
                 .Select(a => a.Address.ToString()));
         }
-        return result.Count > 0 ? result : ["não encontrado"];
+        return result.Count > 0 ? result : [L.T("não encontrado", "not found", "no encontrada")];
     }
 
     static bool IsAutostart()
@@ -346,7 +354,10 @@ public sealed class MainForm : Form
         try
         {
             Process.Start(new ProcessStartInfo("cmd.exe", args) { UseShellExecute = true, Verb = "runas", WindowStyle = ProcessWindowStyle.Hidden })?.WaitForExit();
-            MessageBox.Show("Pronto. O EasyJoy foi liberado no Firewall para redes privadas.\n\nSe ainda não aparecer, confira se o Wi-Fi deste PC está como rede \"Privada\" nas configurações do Windows.", "EasyJoy");
+            MessageBox.Show(L.T(
+                "Pronto. O EasyJoy foi liberado no Firewall para redes privadas.\n\nSe ainda não aparecer, confira se o Wi-Fi deste PC está como rede \"Privada\" nas configurações do Windows.",
+                "Done. EasyJoy is now allowed in the Firewall for private networks.\n\nIf it still doesn't show up, check that this PC's Wi-Fi is set as a \"Private\" network in Windows settings.",
+                "Listo. EasyJoy se permitió en el Firewall para redes privadas.\n\nSi aún no aparece, verifica que la Wi-Fi de este PC esté como red \"Privada\" en la configuración de Windows."), "EasyJoy");
         }
         catch (System.ComponentModel.Win32Exception)
         {

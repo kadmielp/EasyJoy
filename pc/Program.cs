@@ -28,7 +28,10 @@ static class Program
         try { server = new Server(gamepads); }
         catch (SocketException ex)
         {
-            MessageBox.Show($"Não foi possível usar a porta {Protocol.Port}. Outro programa pode estar usando ela.\n\n{ex.Message}", "EasyJoy", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(L.T(
+                $"Não foi possível usar a porta {Protocol.Port}. Outro programa pode estar usando ela.",
+                $"Couldn't use port {Protocol.Port}. Another program may be using it.",
+                $"No se pudo usar el puerto {Protocol.Port}. Otro programa puede estar usándolo.") + $"\n\n{ex.Message}", "EasyJoy", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return;
         }
 

@@ -104,10 +104,10 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
     init {
         setBackgroundColor(0xFF101114.toInt())
         val wheel = base == Layouts.WHEEL
-        if (base != Layouts.SIMPLE) elems += Elem("LT", Kind.RECT, if (wheel) "Freio" else "LT", trigger = 1)
+        if (base != Layouts.SIMPLE) elems += Elem("LT", Kind.RECT, if (wheel) tr("Freio", "Brake", "Freno") else "LT", trigger = 1)
         elems += Elem("LB", Kind.RECT, "LB", Protocol.BTN_LB)
         elems += Elem("RB", Kind.RECT, "RB", Protocol.BTN_RB)
-        if (base != Layouts.SIMPLE) elems += Elem("RT", Kind.RECT, if (wheel) "Acelerar" else "RT", trigger = 2)
+        if (base != Layouts.SIMPLE) elems += Elem("RT", Kind.RECT, if (wheel) tr("Acelerar", "Gas", "Acelerar") else "RT", trigger = 2)
         elems += Elem("Y", Kind.CIRCLE, "Y", Protocol.BTN_Y, color = 0xFFF2C21A.toInt())
         elems += Elem("X", Kind.CIRCLE, "X", Protocol.BTN_X, color = 0xFF2F7CF6.toInt())
         elems += Elem("B", Kind.CIRCLE, "B", Protocol.BTN_B, color = 0xFFE23B3B.toInt())
@@ -118,7 +118,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
         if (base != Layouts.WHEEL) elems += Elem("LS", Kind.STICK, "L")
         if (base == Layouts.FULL) elems += Elem("RS", Kind.STICK, "R")
         if (base != Layouts.SIMPLE) elems += Elem("DPAD", Kind.DPAD, "")
-        elems += Elem("CENTER", Kind.RECT, "Centralizar")
+        elems += Elem("CENTER", Kind.RECT, tr("Centralizar", "Center", "Centrar"))
     }
 
     // ---- layout ------------------------------------------------------------------------------
@@ -293,7 +293,7 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
 
     fun layoutToSave(name: String) = Layout(name, base, tiltEnabled, currentControls())
 
-    val selectedLabel: String? get() = selected?.let { if (it.kind == Kind.DPAD) "Direcional" else if (it.kind == Kind.STICK) "Analógico ${it.label}" else it.label }
+    val selectedLabel: String? get() = selected?.let { if (it.kind == Kind.DPAD) tr("Direcional", "D-pad", "Cruceta") else if (it.kind == Kind.STICK) tr("Analógico", "Stick", "Stick") + " " + it.label else it.label }
     val selectedVisible: Boolean get() = selected?.visible ?: true
 
     fun resizeSelected(factor: Float) {
@@ -611,17 +611,17 @@ class GamepadView(context: Context, val base: String, initial: Layout?) : View(c
             if (!ok) {
                 text.color = 0xFFFF8A8E.toInt()
                 text.textSize = H * 0.038f
-                c.drawText("desconectado", W / 2, H * 0.16f, text)
+                c.drawText(tr("desconectado", "disconnected", "desconectado"), W / 2, H * 0.16f, text)
             }
             if (ok && Connection.driverMissing) {
                 text.color = 0xFFFFB454.toInt()
                 text.textSize = H * 0.035f
-                c.drawText("Driver de controle não instalado no PC", W / 2, H * 0.245f, text)
+                c.drawText(tr("Driver de controle não instalado no PC", "Controller driver not installed on the PC", "Driver de control no instalado en el PC"), W / 2, H * 0.245f, text)
             }
         } else {
             text.color = 0xFF9AA0AE.toInt()
             text.textSize = H * 0.038f
-            c.drawText("Toque num controle para selecionar · arraste para mover", W / 2, if (toolbarAtBottom) H * 0.06f else H * 0.97f, text)
+            c.drawText(tr("Toque num controle para selecionar · arraste para mover", "Tap a control to select it · drag to move", "Toca un control para seleccionarlo · arrastra para mover"), W / 2, if (toolbarAtBottom) H * 0.06f else H * 0.97f, text)
         }
 
         if (tiltEnabled) drawTiltIndicator(c, W, H)

@@ -93,15 +93,15 @@ class ControllerActivity : Activity() {
         visibility = View.GONE
         btnSmaller = toolButton("−") { pad.resizeSelected(0.9f) }
         btnBigger = toolButton("+") { pad.resizeSelected(1.1f) }
-        btnHide = toolButton("Ocultar") { pad.toggleSelectedVisible() }
-        btnTilt = toolButton("Volante") { toggleTilt() }
+        btnHide = toolButton(tr("Ocultar", "Hide", "Ocultar")) { pad.toggleSelectedVisible() }
+        btnTilt = toolButton(tr("Volante", "Wheel", "Volante")) { toggleTilt() }
         addView(btnSmaller)
         addView(btnBigger)
         addView(btnHide)
         addView(btnTilt)
-        addView(toolButton("Padrão") { pad.resetToDefault(); refreshToolbar() })
-        addView(toolButton("Cancelar") { exitEdit(keep = false) })
-        addView(toolButton("Salvar", 0xFF107C10.toInt()) { askName() })
+        addView(toolButton(tr("Padrão", "Default", "Predeterminado")) { pad.resetToDefault(); refreshToolbar() })
+        addView(toolButton(tr("Cancelar", "Cancel", "Cancelar")) { exitEdit(keep = false) })
+        addView(toolButton(tr("Salvar", "Save", "Guardar"), 0xFF107C10.toInt()) { askName() })
     }
 
     private fun refreshToolbar() {
@@ -110,8 +110,8 @@ class ControllerActivity : Activity() {
             b.isEnabled = has
             b.alpha = if (has) 1f else 0.4f
         }
-        btnHide.text = if (has && !pad.selectedVisible) "Mostrar" else "Ocultar"
-        btnTilt.text = if (pad.tiltEnabled) "Volante: ligado" else "Volante: desligado"
+        btnHide.text = if (has && !pad.selectedVisible) tr("Mostrar", "Show", "Mostrar") else tr("Ocultar", "Hide", "Ocultar")
+        btnTilt.text = if (pad.tiltEnabled) tr("Volante: ligado", "Wheel: on", "Volante: activado") else tr("Volante: desligado", "Wheel: off", "Volante: desactivado")
         placeToolbar(bottom = pad.selectedInTopHalf)
     }
 
@@ -129,7 +129,11 @@ class ControllerActivity : Activity() {
 
     private fun showOptions() {
         AlertDialog.Builder(this)
-            .setItems(arrayOf("Voltar ao menu", "Editar layout", "Continuar jogando")) { _, which ->
+            .setItems(arrayOf(
+                tr("Voltar ao menu", "Back to menu", "Volver al menú"),
+                tr("Editar layout", "Edit layout", "Editar diseño"),
+                tr("Continuar jogando", "Keep playing", "Seguir jugando"),
+            )) { _, which ->
                 when (which) {
                     0 -> finish()
                     1 -> enterEdit()
@@ -154,7 +158,7 @@ class ControllerActivity : Activity() {
 
     private fun toggleTilt() {
         if (!pad.tiltEnabled && !Tilt.available(this)) {
-            Toast.makeText(this, "Este celular não tem sensor de movimento.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, tr("Este celular não tem sensor de movimento.", "This phone has no motion sensor.", "Este teléfono no tiene sensor de movimiento."), Toast.LENGTH_LONG).show()
             return
         }
         pad.toggleTilt()
@@ -164,7 +168,7 @@ class ControllerActivity : Activity() {
     private fun askName() {
         val input = EditText(this).apply {
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            setText(layoutName ?: "Meu ${Layouts.baseLabel(pad.base)}")
+            setText(layoutName ?: tr("Meu ", "My ", "Mi ") + Layouts.baseLabel(pad.base))
             selectAll()
         }
         val box = FrameLayout(this).apply {
@@ -172,22 +176,22 @@ class ControllerActivity : Activity() {
             addView(input)
         }
         AlertDialog.Builder(this)
-            .setTitle("Salvar layout")
-            .setMessage("Nome do layout (um nome que já existe é substituído):")
+            .setTitle(tr("Salvar layout", "Save layout", "Guardar diseño"))
+            .setMessage(tr("Nome do layout (um nome que já existe é substituído):", "Layout name (an existing name is replaced):", "Nombre del diseño (un nombre que ya existe se reemplaza):"))
             .setView(box)
-            .setPositiveButton("Salvar") { _, _ ->
+            .setPositiveButton(tr("Salvar", "Save", "Guardar")) { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isEmpty()) {
-                    Toast.makeText(this, "Digite um nome.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, tr("Digite um nome.", "Type a name.", "Escribe un nombre."), Toast.LENGTH_SHORT).show()
                 } else {
                     Layouts.save(pad.layoutToSave(name))
                     layoutName = name
                     exitEdit(keep = true)
-                    Toast.makeText(this, "Layout \"$name\" salvo. Ele aparece no menu.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, tr("Layout \"$name\" salvo. Ele aparece no menu.", "Layout \"$name\" saved. It shows up in the menu.", "Diseño \"$name\" guardado. Aparece en el menú."), Toast.LENGTH_SHORT).show()
                 }
                 hideSystemBars()
             }
-            .setNegativeButton("Voltar") { _, _ -> hideSystemBars() }
+            .setNegativeButton(tr("Voltar", "Back", "Volver")) { _, _ -> hideSystemBars() }
             .show()
     }
 

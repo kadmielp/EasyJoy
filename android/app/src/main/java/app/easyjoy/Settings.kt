@@ -34,6 +34,9 @@ object Settings {
         private set
     var volumeDown by mutableStateOf(NONE)
         private set
+    /** UI language choice: [I18n.AUTO], "pt", "en" or "es". */
+    var language by mutableStateOf(I18n.AUTO)
+        private set
     var lastIp: String? = null
         private set
     var lastName: String? = null
@@ -53,6 +56,8 @@ object Settings {
         tiltMax = p.getFloat("tiltMax", 45f).coerceIn(15f, 90f)
         volumeUp = p.getString("volumeUp", NONE)!!.takeIf { t -> VolumeTargets.any { it.id == t } } ?: NONE
         volumeDown = p.getString("volumeDown", NONE)!!.takeIf { t -> VolumeTargets.any { it.id == t } } ?: NONE
+        language = p.getString("language", I18n.AUTO)!!.takeIf { it in I18n.Choices } ?: I18n.AUTO
+        I18n.apply(language)
         Layouts.init(app)
         lastIp = p.getString("lastIp", null)
         lastName = p.getString("lastName", null)
@@ -102,20 +107,32 @@ object Settings {
         prefs?.edit()?.putString("volumeDown", id)?.apply()
     }
 
+    fun updateLanguage(choice: String) {
+        language = choice
+        I18n.apply(choice)
+        prefs?.edit()?.putString("language", choice)?.apply()
+    }
+
     const val NONE = "none"
 
     /** A gamepad button a volume key can press: XInput [mask], or [trigger] 1 = LT, 2 = RT. */
-    data class VolumeTarget(val id: String, val label: String, val mask: Int = 0, val trigger: Int = 0)
+    data class VolumeTarget(val id: String, private val name: String, val mask: Int = 0, val trigger: Int = 0) {
+        val label: String get() = when (id) {
+            NONE -> tr("Nenhum (volume)", "None (volume)", "Ninguno (volumen)")
+            "UP", "DOWN", "LEFT", "RIGHT" -> tr("Direcional", "D-pad", "Cruceta") + " " + name
+            else -> name
+        }
+    }
 
     val VolumeTargets = listOf(
-        VolumeTarget(NONE, "Nenhum (volume)"),
+        VolumeTarget(NONE, ""),
         VolumeTarget("A", "A", 0x1000), VolumeTarget("B", "B", 0x2000),
         VolumeTarget("X", "X", 0x4000), VolumeTarget("Y", "Y", 0x8000),
         VolumeTarget("LB", "LB", 0x0100), VolumeTarget("RB", "RB", 0x0200),
         VolumeTarget("LT", "LT", trigger = 1), VolumeTarget("RT", "RT", trigger = 2),
         VolumeTarget("BACK", "Back", 0x0020), VolumeTarget("START", "Start", 0x0010), VolumeTarget("HOME", "Home", 0x0400),
-        VolumeTarget("UP", "Direcional ↑", 0x0001), VolumeTarget("DOWN", "Direcional ↓", 0x0002),
-        VolumeTarget("LEFT", "Direcional ←", 0x0004), VolumeTarget("RIGHT", "Direcional →", 0x0008),
+        VolumeTarget("UP", "↑", 0x0001), VolumeTarget("DOWN", "↓", 0x0002),
+        VolumeTarget("LEFT", "←", 0x0004), VolumeTarget("RIGHT", "→", 0x0008),
         VolumeTarget("L3", "L3", 0x0040), VolumeTarget("R3", "R3", 0x0080),
     )
 

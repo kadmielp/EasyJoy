@@ -395,7 +395,7 @@ class TouchpadView(context: Context) : View(context) {
         text.textAlign = Paint.Align.LEFT
         text.textSize = 13 * d
         text.color = if (ok) 0xFFB5E8BE.toInt() else 0xFFFF8A8E.toInt()
-        c.drawText(if (ok) "conectado" else "desconectado", 30 * d, 24 * d + text.textSize * 0.35f, text)
+        c.drawText(if (ok) tr("conectado", "connected", "conectado") else tr("desconectado", "disconnected", "desconectado"), 30 * d, 24 * d + text.textSize * 0.35f, text)
         text.textAlign = Paint.Align.CENTER
 
         fill.color = 0xFF23262D.toInt()
@@ -416,26 +416,26 @@ class TouchpadView(context: Context) : View(context) {
         text.textSize = 13 * d
         val cx = padRect.centerX()
         val cy = padRect.centerY()
-        val lines = if (mode == Mode.DRAG) listOf("Arrastando...") else listOf(
-            "Arraste para mover",
-            "Toque = clique esquerdo",
-            "Toque com 2 dedos = clique direito",
-            "2 dedos arrastando = rolagem",
-            "Pinça com 2 dedos = zoom",
-            "Toque duas vezes e arraste = arrastar item",
+        val lines = if (mode == Mode.DRAG) listOf(tr("Arrastando...", "Dragging...", "Arrastrando...")) else listOf(
+            tr("Arraste para mover", "Drag to move", "Arrastra para mover"),
+            tr("Toque = clique esquerdo", "Tap = left click", "Toque = clic izquierdo"),
+            tr("Toque com 2 dedos = clique direito", "2-finger tap = right click", "Toque con 2 dedos = clic derecho"),
+            tr("2 dedos arrastando = rolagem", "2-finger drag = scroll", "Arrastrar con 2 dedos = desplazar"),
+            tr("Pinça com 2 dedos = zoom", "2-finger pinch = zoom", "Pellizcar con 2 dedos = zoom"),
+            tr("Toque duas vezes e arraste = arrastar item", "Double-tap and drag = drag item", "Toca dos veces y arrastra = arrastrar elemento"),
         )
         var y = cy - (lines.size - 1) * 10 * d
         for (l in lines) { c.drawText(l, cx, y + text.textSize * 0.35f, text); y += 20 * d }
         if (ok && Connection.driverMissing) {
             text.color = 0xFFFFB454.toInt()
             text.textSize = 12 * d
-            c.drawText("Driver de controle não instalado no PC — o modo mouse funciona", cx, padRect.top + 22 * d, text)
+            c.drawText(tr("Driver de controle não instalado no PC — o modo mouse funciona", "Controller driver not installed on the PC — mouse mode works", "Driver de control no instalado en el PC — el modo ratón funciona"), cx, padRect.top + 22 * d, text)
         }
 
         // Bottom bar
-        drawBar(c, leftBtn, "Esquerdo", leftHeld)
-        drawBar(c, rightBtn, "Direito", rightHeld)
-        drawBar(c, kbBtn, "Teclado", kbPressed)
+        drawBar(c, leftBtn, tr("Esquerdo", "Left", "Izquierdo"), leftHeld)
+        drawBar(c, rightBtn, tr("Direito", "Right", "Derecho"), rightHeld)
+        drawBar(c, kbBtn, tr("Teclado", "Keyboard", "Teclado"), kbPressed)
         stroke.strokeWidth = 1.5f * d
     }
 

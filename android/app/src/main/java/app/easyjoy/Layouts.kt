@@ -24,9 +24,9 @@ object Layouts {
     const val WHEEL = "wheel"
 
     fun baseLabel(base: String) = when (base) {
-        FULL -> "Completo"
-        SIMPLE -> "Simples"
-        else -> "Volante"
+        FULL -> tr("Completo", "Full", "Completo")
+        SIMPLE -> tr("Simples", "Simple", "Simple")
+        else -> tr("Volante", "Wheel", "Volante")
     }
 
     var saved by mutableStateOf<List<Layout>>(emptyList())
