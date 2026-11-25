@@ -102,6 +102,10 @@ public sealed class DsuServer : IDisposable
             case MsgPortInfo:
             {
                 if (d.Length < 24) return;
+                // An emulator polling for controllers counts as listening: Dolphin asks for pad data only
+                // after a slot shows as connected, and a slot connects only once the phone streams motion.
+                if (!_clients.TryGetValue(from, out var poller)) _clients[from] = poller = new Client();
+                poller.LastRequest = DateTime.UtcNow;
                 int count = Math.Clamp(BinaryPrimitives.ReadInt32LittleEndian(d.AsSpan(20)), 0, 4);
                 for (int i = 0; i < count && 24 + i < d.Length; i++)
                 {
